@@ -1,6 +1,6 @@
 <#
 ================================================================================
- qc-api.ps1 -- NWMS ISIR / QC plan service  (v0.5.2)
+ qc-api.ps1 -- NWMS ISIR / QC plan service  (v0.5.3)
 ================================================================================
 
  WHAT THIS IS
@@ -212,7 +212,7 @@ $ErrorActionPreference = 'Stop'
 # Service identity
 # ------------------------------------------------------------------------------
 $ServiceName    = 'qc-api'
-$ServiceVersion = '0.5.2'   # surfaced in /api/health and the startup banner
+$ServiceVersion = '0.5.3'   # surfaced in /api/health and the startup banner
 
 # Tag stamped on the front of EVERY console line the request loop writes, built
 # once here rather than per request. An unlabelled ad-hoc run gets no tag at all,

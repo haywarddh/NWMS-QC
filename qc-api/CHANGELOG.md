@@ -1,5 +1,14 @@
 # Changelog — qc-api
 
+## 0.5.3 — 2026-08-17
+
+Version bump only -- nothing in this file changed. The fix behind this release
+is entirely in the front end (a `crypto.randomUUID()` call that throws outside
+a secure context); see the root `CHANGELOG.md`. Noted here anyway rather than
+left as a silent gap: this service answered `/api/health` with "0.5.3" at some
+point, and a changelog that skips a version a client actually reported is
+exactly the kind of gap this file exists to avoid.
+
 ## 0.5.2 — 2026-08-17
 
 Fixes PDF drawing upload, which was broken everywhere except the Vite dev

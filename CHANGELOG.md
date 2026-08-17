@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.2"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.3"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,24 @@ the project-level record.
 ---
 
 ## History
+
+### 0.5.3 — 2026-08-17
+
+**"Start the ISIR" fixed** — and with it every other "create new" action in the
+app: new PMPs, route steps, FMEA rows and actions, gauge R&R studies, template
+saves, revisions, CSV uploads, manual checks. All of them mint a new id via
+`crypto.randomUUID()`, which browsers restrict to secure contexts (HTTPS, or
+`localhost`). This app is deliberately plain HTTP on the LAN, so on the
+deployed URL `crypto.randomUUID` does not exist at all — every one of those
+actions threw immediately, silently, with nothing shown in the app and nothing
+but a console error to say why. It never showed up in testing because Vite's
+dev server runs on `localhost`, which is exempt.
+
+Fixed with one shared helper (`newId()` in `src/lib/utils.ts`) that falls back
+to building a v4 UUID from `crypto.getRandomValues()` — which carries no such
+restriction — when `randomUUID` is unavailable, and replaces all 22 call sites
+across the app. Confirmed the fallback produces correctly-formed, unique ids
+before shipping it.
 
 ### 0.5.2 — 2026-08-17
 
