@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.3"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.4"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,16 @@ the project-level record.
 ---
 
 ## History
+
+### 0.5.4 — 2026-08-17
+
+**Knowledge base layout cleaned up.** Both tabs (failure lines, station rows)
+were a 2-column card grid — expanding one row to edit it left a tall card
+jammed next to a short neighbour, jagged and uneven. Both are now a single
+column, so opening a row just pushes everything below it down cleanly.
+Station rows also gained a search box (station code, wording), matching what
+failure lines already had — previously the only way to find one among 17+
+was to scroll and read.
 
 ### 0.5.3 — 2026-08-17
 

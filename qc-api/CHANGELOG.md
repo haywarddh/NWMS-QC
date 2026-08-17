@@ -1,5 +1,10 @@
 # Changelog — qc-api
 
+## 0.5.4 — 2026-08-17
+
+Version bump only -- nothing in this file changed. See the root `CHANGELOG.md`;
+the fix is entirely in the front end's Knowledge base panel.
+
 ## 0.5.3 — 2026-08-17
 
 Version bump only -- nothing in this file changed. The fix behind this release
