@@ -1,5 +1,20 @@
 # Changelog — qc-api
 
+## 0.6.0 — 2026-08-17
+
+Adds `/api/scans`, a second blob store alongside `/api/attachments` — one
+merged, deduplicated InspecVision dataset per file, referenced by a small id
+a PMP carries instead of holding the rows itself. One content type
+(`application/json`) instead of three image types, so no magic-byte sniff
+and no multi-extension resolve; POST does a cheap "starts with `[`" sanity
+check rather than a full `ConvertFrom-Json`, for the same PS 5.1 large/deep-
+JSON reason plan bodies are stored as raw strings. 25 MB cap per blob (higher
+than attachments' 15 MB — there is no client-side downscale step for this
+data, and it only grows over a plan's life). New `$ScansDir`, `Test-ScanId`/
+`New-ScanId`/`Resolve-ScanPath`, `Invoke-ScanPost`/`Get`/`Delete`, and a new
+SCAN DATA section in the header comment alongside ATTACHMENTS. See the root
+`CHANGELOG.md` for the feature this exists to support.
+
 ## 0.5.5 — 2026-08-17
 
 Version bump only -- nothing in this file changed. See the root `CHANGELOG.md`;

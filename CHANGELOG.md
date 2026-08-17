@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.5"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.6.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,38 @@ the project-level record.
 ---
 
 ## History
+
+### 0.6.0 — 2026-08-17
+
+**PMPs can now be satisfied by an InspecVision 3D-scan check** — one
+control-plan characteristic verified by scanning many dimensions at once
+(the flat pattern's accuracy, and dimensions unaffected by later forming),
+rather than one manually-measured value.
+
+- A "good / no good" PMP verified by InspecVision gets a new panel: drop an
+  export in, and it's parsed (InspecVision's own format — UTF-16 with a byte-
+  order mark, tab-delimited, not the comma-separated shape the existing CSV
+  importer expects), merged against whatever was uploaded before, and
+  deduplicated on feature name + inspection timestamp — because InspecVision's
+  own export is itself cumulative, appending to the same file until someone
+  archives it on their end, so re-uploading it will substantially overlap a
+  prior upload.
+- Shows a live summary — features, runs, rows currently failing — plus which
+  features are trending the same direction run after run (usually means a
+  laser program or a tool moved, not noise), and the full detail one scroll
+  away.
+- The scan data itself lives outside the autosaved plan body, in a new
+  service-side store (`qc-api` 0.6.0, `/api/scans`) — the same reason photos
+  do: this can run to thousands of rows over a plan's life, and the whole
+  plan is re-PUT on every 700ms autosave.
+- Readiness, Capability and the customer report all recognise this evidence
+  with **no changes to any of the three** — a scan derives one ordinary
+  reading per run ("good"/"no good"), so the same "any failure blocks
+  readiness" rule that already governs every other PMP applies here too.
+- Fixes a related gap found while building this: amending a plan without
+  carrying evidence forward left a PMP's prior scan summary visible even
+  though the readings it was drawn from had just been cleared — the panel and
+  the readiness machinery would have disagreed about the same PMP.
 
 ### 0.5.5 — 2026-08-17
 

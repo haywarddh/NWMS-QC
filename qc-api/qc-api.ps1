@@ -1,6 +1,6 @@
 <#
 ================================================================================
- qc-api.ps1 -- NWMS ISIR / QC plan service  (v0.5.5)
+ qc-api.ps1 -- NWMS ISIR / QC plan service  (v0.6.0)
 ================================================================================
 
  WHAT THIS IS
@@ -38,8 +38,14 @@
    GET    /api/attachments/{id}  -> the image bytes with the stored Content-Type,
                                     or 404 {"error":"not found"}
    DELETE /api/attachments/{id}  -> 200 {"ok":true}  (idempotent)
- All responses are JSON, UTF-8, application/json -- with ONE exception:
- GET /api/attachments/{id} answers with raw image bytes. Errors are always
+   POST   /api/scans             -> body: RAW JSON bytes (an InspecVisionRow[]
+                                    array); 201 {"id":"<32 hex>","bytes":N}
+   GET    /api/scans/{id}        -> the JSON bytes, Content-Type application/json,
+                                    or 404 {"error":"not found"}
+   DELETE /api/scans/{id}        -> 200 {"ok":true}  (idempotent)
+ All responses are JSON, UTF-8, application/json -- with TWO exceptions:
+ GET /api/attachments/{id} answers with raw image bytes, and GET /api/scans/{id}
+ answers with raw JSON bytes this service never parses. Errors are always
  JSON: {"error":"..."}.
  PlanMeta / PlanRecord shapes are defined by the TypeScript source of truth:
    qc\src\lib\plan-repository.ts  and  qc\src\lib\plan-store.tsx
@@ -96,6 +102,35 @@
      If that ever needs sweeping up, it wants a deliberate reference-counting
      pass across every plan, not a delete hook.
 
+ SCAN DATA (why InspecVision scans live OUTSIDE the plan body, same as photos)
+ ------------------------------------------------------------------------
+ One PMP can be satisfied by an InspecVision 3D-scan check of many dimensions
+ at once, rather than one manually-measured value. InspecVision's own export
+ is itself cumulative -- it keeps appending to the same file until someone
+ archives it on their end -- so re-uploading it will substantially overlap a
+ prior upload, and a scan attached to a long-lived plan can accumulate to
+ thousands of rows. That is the same "too big, too often, to live in the
+ autosaved plan body" shape as photos (see ATTACHMENTS above), so this store
+ follows the identical pattern: a blob is POSTed ONCE per merge, and the plan
+ body carries only the returned id.
+   * It differs from attachments in one respect: a scan REPLACES its PMP's
+     reference on every re-upload rather than accumulating new references,
+     because the front end fetches whatever blob is already stored, merges
+     the freshly parsed rows in (deduplicated on Name + Inspection date), and
+     POSTs the merged result as a NEW blob. The old blob becomes an orphan --
+     never deleted, for exactly the reason attachments are never
+     cascade-deleted: a frozen prior plan revision may still reference it.
+   * This service never parses a scan's contents. It is an opaque JSON blob
+     store, exactly like attachments are an opaque image store -- POST does
+     only a cheap "does this start with '['" sanity check, never a full
+     ConvertFrom-Json, for the same PS 5.1 large/deep-JSON reason plan bodies
+     are stored as raw strings (see DATA LAYOUT below).
+   * One content type only (application/json), so there is no magic-byte
+     sniff and no multi-extension resolve -- see Resolve-ScanPath.
+   * 25 MB cap per blob, not 15 MB like attachments: there is no client-side
+     downscaling step for this data the way there is for a photo, and it only
+     grows over a plan's life.
+
  DATA LAYOUT (under -DataDir, default .\data next to this script)
  ----------------------------------------------------------------
    plans\<id>.json   one full PlanRecord per file, stored as the RAW request
@@ -112,6 +147,11 @@
                      (32 hex chars) and the extension IS the stored content
                      type -- no sidecar metadata. Plans reference these by id
                      only; see ATTACHMENTS above.
+   scans\<id>.json   one merged, deduplicated InspecVision dataset per file.
+                     <id> is server-generated (32 hex chars); content is
+                     always application/json, so unlike attachments there is
+                     only one possible extension. One live reference per PMP
+                     (Pmp.inspecVisionScan.blobId) -- see SCAN DATA above.
    library.json      raw body of the last PUT /api/library.
    settings.json     {"privilegedPasswordHash":"<hex sha256>","updatedAt":"..."}
                      Created on first run from the default password
@@ -212,7 +252,7 @@ $ErrorActionPreference = 'Stop'
 # Service identity
 # ------------------------------------------------------------------------------
 $ServiceName    = 'qc-api'
-$ServiceVersion = '0.5.5'   # surfaced in /api/health and the startup banner
+$ServiceVersion = '0.6.0'   # surfaced in /api/health and the startup banner
 
 # Tag stamped on the front of EVERY console line the request loop writes, built
 # once here rather than per request. An unlabelled ad-hoc run gets no tag at all,
@@ -244,6 +284,7 @@ $IndexPath      = Join-Path $PlansDir 'index.json'
 $LibraryPath    = Join-Path $DataDir 'library.json'
 $SettingsPath   = Join-Path $DataDir 'settings.json'
 $AttachmentsDir = Join-Path $DataDir 'attachments'
+$ScansDir       = Join-Path $DataDir 'scans'
 
 # The service lock. Deliberately inside the DATA folder: the thing being
 # protected is this data, so "one holder per data folder" is precisely the rule,
@@ -255,6 +296,7 @@ $LockPath       = Join-Path $DataDir 'qc-api.lock'
 $null = New-Item -ItemType Directory -Force -Path $DataDir
 $null = New-Item -ItemType Directory -Force -Path $PlansDir
 $null = New-Item -ItemType Directory -Force -Path $AttachmentsDir
+$null = New-Item -ItemType Directory -Force -Path $ScansDir
 
 # UTF-8 encoder WITHOUT a BOM. [System.Text.Encoding]::UTF8 writes a BOM via
 # WriteAllText, which would corrupt JSON parsing in the browser -- always use
@@ -269,6 +311,14 @@ $MaxBodyBytes = 100MB
 # real ISIR photo lands well under a megabyte; 15 MB is headroom for an
 # un-downscaled phone original, not the expected size.
 $MaxAttachmentBytes = 15MB
+
+# Per-scan-blob cap. Unlike photos there is no client-side downscaling step --
+# a merged InspecVision dataset only grows over a plan's life as more runs get
+# folded in. Twenty-odd named columns as a flat JSON array of objects runs
+# roughly 300-600 bytes/row, so even a pessimistic 20,000-row lifetime
+# accumulation lands under 12 MB -- 25 MB is comfortable headroom, not the
+# expected size, same spirit as $MaxAttachmentBytes above.
+$MaxScanBytes = 25MB
 
 # Password used to SEED data\settings.json the very first time the service
 # runs. It is not a fallback: once settings.json exists only the hash in that
@@ -592,6 +642,50 @@ function Get-AttachmentContentType {
         if ([string]$AttachmentTypes[$type] -eq $Extension) { return [string]$type }
     }
     return 'application/octet-stream'
+}
+
+# --- Scan data (InspecVision) -------------------------------------------------
+# A second, simpler blob store alongside attachments: one content type
+# (application/json) instead of three, so there is only one possible
+# extension and no magic-byte sniff to run. Deliberately its own set of
+# functions rather than reusing the attachment ones directly -- the bodies
+# would be identical for New-*Id, but a maintainer reading Invoke-ScanPost
+# should not have to wonder why it calls something named for attachments.
+
+# Same generation as New-AttachmentId: 16 crypto-random bytes as 32 lower-case
+# hex chars. Not client-supplied, not sequential -- the id is the only thing
+# guarding a scan blob.
+function New-ScanId {
+    $raw = New-Object byte[] 16
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        $rng.GetBytes($raw)
+    }
+    finally {
+        $rng.Dispose()
+    }
+    $builder = New-Object System.Text.StringBuilder
+    foreach ($byte in $raw) {
+        $null = $builder.Append($byte.ToString('x2'))
+    }
+    return $builder.ToString()
+}
+
+# The path-traversal guard for data\scans\<id>.json. Case-sensitive, same
+# reasoning as Test-AttachmentId.
+function Test-ScanId {
+    param([string]$Id)
+    return ($Id -cmatch '^[a-f0-9]{32}$')
+}
+
+# Unlike Resolve-AttachmentPath there is only one possible extension -- content
+# is always JSON -- so no try-each-extension loop is needed. Callers MUST have
+# run Test-ScanId first.
+function Resolve-ScanPath {
+    param([string]$Id)
+    $candidate = Join-Path $ScansDir ($Id + '.json')
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) { return $candidate }
+    return ''
 }
 
 # ==============================================================================
@@ -1086,6 +1180,87 @@ function Invoke-AttachmentDelete {
     return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":true}')
 }
 
+# POST /api/scans -- the body IS the merged InspecVision row array as JSON
+# bytes; no envelope, mirroring how attachments take raw image bytes. This
+# service never parses InspecVision's row shape -- it is an opaque blob store,
+# exactly like attachments are for images. See SCAN DATA in the header block.
+function Invoke-ScanPost {
+    param($Context)
+    $request = $Context.Request
+
+    if ($request.ContentLength64 -gt $MaxScanBytes) {
+        return (Send-Json -Context $Context -StatusCode 413 -Json (New-ErrorBody 'scan data too large - the limit is 25 MB'))
+    }
+
+    try {
+        $bytes = Read-RequestBytes -Context $Context -MaxBytes $MaxScanBytes
+    }
+    catch [System.Net.HttpListenerException] {
+        return 499
+    }
+    catch [System.IO.IOException] {
+        return 499
+    }
+    if ($null -eq $bytes) {
+        return (Send-Json -Context $Context -StatusCode 413 -Json (New-ErrorBody 'scan data too large - the limit is 25 MB'))
+    }
+    if ($bytes.Length -eq 0) {
+        return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'empty request body'))
+    }
+
+    # Light sanity check ONLY -- the first non-whitespace byte must be '[',
+    # since the front end always sends a JSON array. Deliberately NOT a full
+    # ConvertFrom-Json parse: the same PS 5.1 large/deep-JSON risk that keeps
+    # plan bodies stored as raw strings (see DATA LAYOUT) applies here too, and
+    # a merged scan can run to thousands of rows.
+    $firstChar = ''
+    for ($i = 0; $i -lt $bytes.Length; $i++) {
+        $ch = [char]$bytes[$i]
+        if (-not [char]::IsWhiteSpace($ch)) { $firstChar = $ch; break }
+    }
+    if ($firstChar -ne '[') {
+        return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'scan data must be a JSON array'))
+    }
+
+    # The id is minted HERE. Nothing the client sent influences the filename.
+    $id       = New-ScanId
+    $filePath = Join-Path $ScansDir ($id + '.json')
+    Write-FileAtomicBytes -Path $filePath -Bytes $bytes
+
+    $json = '{"id":"' + $id + '","bytes":' + $bytes.Length + '}'
+    return (Send-Json -Context $Context -StatusCode 201 -Json $json)
+}
+
+# GET /api/scans/{id} -- the bytes go out exactly as stored, same discipline
+# as Invoke-AttachmentGet: read with ReadAllBytes, handed to Send-Bytes as a
+# byte[], never near a string this service would have to parse.
+function Invoke-ScanGet {
+    param($Context, [string]$Id)
+    $filePath = Resolve-ScanPath -Id $Id
+    if ($filePath -eq '') {
+        return (Send-Json -Context $Context -StatusCode 404 -Json (New-ErrorBody 'not found'))
+    }
+    $bytes = [System.IO.File]::ReadAllBytes($filePath)
+    # No immutable caching here, unlike attachments: a scan blob's id is
+    # superseded (not edited) on every merge, so this is still safe to cache,
+    # but the front end always fetches by the CURRENT id off a fresh Pmp, so
+    # there is no benefit to hanging onto a stale response either.
+    return (Send-Bytes -Context $Context -StatusCode 200 -ContentType 'application/json; charset=utf-8' -Bytes $bytes)
+}
+
+# DELETE /api/scans/{id} -- idempotent, exists for symmetry and any future
+# maintenance sweep. The app itself never calls this in normal use: a fresh
+# merge supersedes a PMP's reference rather than deleting the old blob -- see
+# Pmp.inspecVisionScan's field comment in plan-store.tsx for why.
+function Invoke-ScanDelete {
+    param($Context, [string]$Id)
+    $filePath = Resolve-ScanPath -Id $Id
+    if ($filePath -ne '') {
+        Remove-Item -LiteralPath $filePath -Force
+    }
+    return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":true}')
+}
+
 # ==============================================================================
 # Static file serving (production: the built front-end from qc\dist)
 # ==============================================================================
@@ -1267,6 +1442,24 @@ function Invoke-Request {
         }
         if ($routeMethod -eq 'GET')    { return (Invoke-AttachmentGet    -Context $Context -Id $attachmentId) }
         if ($routeMethod -eq 'DELETE') { return (Invoke-AttachmentDelete -Context $Context -Id $attachmentId) }
+        return (Send-MethodNotAllowed -Context $Context)
+    }
+
+    # Scan data (InspecVision). Same shape as attachments, same ordering rule.
+    if ($path -eq '/api/scans') {
+        # POST only -- same reasoning as attachments: no "list all scans"
+        # endpoint, a scan blob is reached through the PMP that references it.
+        if ($method -eq 'POST') { return (Invoke-ScanPost -Context $Context) }
+        return (Send-MethodNotAllowed -Context $Context)
+    }
+
+    if ($path -match '^/api/scans/([^/]+)$') {
+        $scanId = $Matches[1]
+        if (-not (Test-ScanId -Id $scanId)) {
+            return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'invalid scan id'))
+        }
+        if ($routeMethod -eq 'GET')    { return (Invoke-ScanGet    -Context $Context -Id $scanId) }
+        if ($routeMethod -eq 'DELETE') { return (Invoke-ScanDelete -Context $Context -Id $scanId) }
         return (Send-MethodNotAllowed -Context $Context)
     }
 
