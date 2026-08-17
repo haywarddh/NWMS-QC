@@ -1,5 +1,10 @@
 # Changelog — qc-api
 
+## 0.5.5 — 2026-08-17
+
+Version bump only -- nothing in this file changed. See the root `CHANGELOG.md`;
+the fix is entirely in the front end's header.
+
 ## 0.5.4 — 2026-08-17
 
 Version bump only -- nothing in this file changed. See the root `CHANGELOG.md`;

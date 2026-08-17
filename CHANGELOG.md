@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.4"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.5"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,24 @@ the project-level record.
 ---
 
 ## History
+
+### 0.5.5 — 2026-08-17
+
+**Header rebuilt as two rows: logo/status, then nav.** Two separate problems,
+fixed together because both lived in the same container:
+
+- The nav used to horizontal-scroll once it ran out of room, with the
+  scrollbar hidden. Below about 1650px wide -- which includes 1366×768, one of
+  the most common laptop resolutions there is -- **Approval, Customer report,
+  Records and Library were completely hidden**, with no visible hint that
+  more nav existed. It now wraps onto a second line instead, so every item is
+  always visible regardless of screen width.
+- The header used to change WIDTH depending which page you were on -- edge to
+  edge on Dashboard, Drawing & plan, Evidence, Capability and Review, but
+  centred and 1600px-capped everywhere else -- because it read the same
+  `wide` flag meant for page content. The header no longer reads it at all;
+  it is now the same width on every page. Page content is unaffected: `wide`
+  still works exactly as before for that.
 
 ### 0.5.4 — 2026-08-17
 
