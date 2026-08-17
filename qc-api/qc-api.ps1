@@ -1,6 +1,6 @@
 <#
 ================================================================================
- qc-api.ps1 -- NWMS ISIR / QC plan service  (v0.5.0)
+ qc-api.ps1 -- NWMS ISIR / QC plan service  (v0.5.1)
 ================================================================================
 
  WHAT THIS IS
@@ -150,6 +150,11 @@
    as "instance", so a LIVE window and a DEV window (and their health replies)
    are distinguishable at a glance. Two identical black console windows is how
    someone stops, or publishes over, the wrong one.
+   The label is ALSO stamped on the front of every request-log line, and a
+   fuller identity line is re-printed every 25 requests. That is not decoration:
+   the banner above scrolls out of view within seconds of real use, and without
+   those two the LIVE window becomes an unlabelled wall of log. Do not tidy
+   them away.
  * ONE service per data folder, enforced: an EXCLUSIVE lock is taken on
    <DataDir>\qc-api.lock before the listener starts and held for the process
    lifetime. Two services sharing one data folder would interleave writes to
@@ -207,7 +212,15 @@ $ErrorActionPreference = 'Stop'
 # Service identity
 # ------------------------------------------------------------------------------
 $ServiceName    = 'qc-api'
-$ServiceVersion = '0.5.0'   # surfaced in /api/health and the startup banner
+$ServiceVersion = '0.5.1'   # surfaced in /api/health and the startup banner
+
+# Tag stamped on the front of EVERY console line the request loop writes, built
+# once here rather than per request. An unlabelled ad-hoc run gets no tag at all,
+# so its output is byte-for-byte what it always was.
+$RequestLogTag = ''
+if (-not [string]::IsNullOrWhiteSpace($InstanceLabel)) {
+    $RequestLogTag = '[' + $InstanceLabel + '] '
+}
 
 # ------------------------------------------------------------------------------
 # Resolve paths (all relative defaults hang off the script's own folder)
@@ -287,11 +300,15 @@ $PlanMetaFields = @(
 # Small shared helpers
 # ==============================================================================
 
-# One console line per request: timestamp, method, path, status, duration.
+# One console line per request: instance, timestamp, method, path, status,
+# duration. The instance tag LEADS the line deliberately -- once the startup
+# banner has scrolled away it is the only thing left saying whether this window
+# is LIVE or DEV, and a left-aligned tag can be read straight down the edge of a
+# screenful of log without reading the lines themselves.
 function Write-RequestLog {
     param([string]$Method, [string]$Path, [int]$StatusCode, [int]$DurationMs)
     $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-    Write-Host ('{0}  {1,-7} {2}  ->  {3}  ({4} ms)' -f $stamp, $Method, $Path, $StatusCode, $DurationMs)
+    Write-Host ('{0}{1}  {2,-7} {3}  ->  {4}  ({5} ms)' -f $RequestLogTag, $stamp, $Method, $Path, $StatusCode, $DurationMs)
 }
 
 # Builds {"error":"..."} with the message properly JSON-escaped.
@@ -1436,6 +1453,25 @@ Write-Host (' Started   : ' + $serviceStartedAt.ToString('yyyy-MM-dd HH:mm:ss'))
 Write-Host ' Stop with Ctrl+C.'
 Write-Host '=============================================================='
 
+# --- Identity that survives the scroll ----------------------------------------
+# Everything above is printed ONCE. This service also logs a line per request to
+# the same console, so within seconds of real use the banner -- the only thing
+# saying LIVE or DEV -- has scrolled out of view. On a Windows Terminal host it
+# is worse than out of view: WT reports the console buffer as the same size as
+# the window, so there is no console scrollback to scroll back through.
+#
+# So identity has to ride the output that keeps coming: the [LABEL] tag on every
+# request line, plus this fuller reminder every so often. Nothing here relies on
+# the window title, which sounds like the obvious answer and is not: under
+# Windows Terminal the OS window title follows the ACTIVE TAB, so a background
+# LIVE tab is not what the taskbar shows. The launchers set a title anyway.
+#
+# 25 is chosen to be under a default 30-row window, so at least one reminder is
+# on screen at any moment rather than merely usually.
+$IdentityReminder      = '---- ' + $RequestLogTag + $ServiceName + ' v' + $ServiceVersion + ' -- ' + $prefix + ' -- PID ' + $PID + ' ----'
+$IdentityEveryRequests = 25
+$requestCount          = 0
+
 # Touch settings.json once at startup so a first run seeds it (and prints its
 # "change the default password" warning) here, right under the banner, rather
 # than buried in the request log the first time someone opens the app.
@@ -1466,7 +1502,7 @@ try {
             # The detail goes to the CONSOLE, not to the client: .NET exception
             # messages carry full server paths, and this service will sit on the
             # LAN. Whoever is debugging has the window open in front of them.
-            Write-Host ('ERROR ' + $context.Request.HttpMethod + ' ' + $context.Request.RawUrl + ' -- ' + $_.Exception.Message)
+            Write-Host ($RequestLogTag + 'ERROR ' + $context.Request.HttpMethod + ' ' + $context.Request.RawUrl + ' -- ' + $_.Exception.Message)
             try {
                 $status = Send-Json -Context $context -StatusCode 500 -Json (New-ErrorBody 'internal error - see the qc-api console for detail')
             }
@@ -1477,6 +1513,16 @@ try {
 
         $stopwatch.Stop()
         Write-RequestLog -Method $logMethod -Path $logPath -StatusCode $status -DurationMs ([int][math]::Round($stopwatch.Elapsed.TotalMilliseconds))
+
+        # Re-assert which instance this window is, every so often. The [LABEL] on
+        # each line above says LIVE or DEV; this says it again with the version,
+        # address and PID, which the per-line tag has no room for.
+        # This runs at top-level script scope, so a plain assignment updates the
+        # variable -- it would need $script: if it ever moved inside a function.
+        $requestCount = $requestCount + 1
+        if (($requestCount % $IdentityEveryRequests) -eq 0) {
+            Write-Host $IdentityReminder
+        }
     }
 }
 finally {

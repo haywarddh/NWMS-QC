@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.1"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -55,6 +55,34 @@ the project-level record.
 
 ## History
 
+### 0.5.1 — 2026-08-17
+
+The service window now says which instance it is on **every** line, not just once
+at startup.
+
+- **The instance label rides the request log.** `qc-api` writes a line per HTTP
+  request to its own console, so the startup banner — the only thing distinguishing
+  a LIVE window from a DEV one — scrolled out of view within seconds of real use.
+  Every request line now leads with `[LIVE]` / `[DEV]` / `[LOCAL]`, and a fuller
+  identity line (`---- [LIVE] qc-api v0.5.1 -- http://+:8791/ -- PID 1234 ----`)
+  is re-printed every 25 requests, which is under a default 30-row window so at
+  least one is always on screen.
+- Considered and rejected: setting the console **window title** from the service.
+  It sounds like the obvious answer, but under Windows Terminal the window title
+  follows the *active tab*, so a background LIVE tab is not what the taskbar
+  shows — and the launchers already set a title anyway. Also rejected: a sticky
+  header (measured — it corrupts the line it overwrites and does nothing under
+  Windows Terminal) and colour-coding (`DarkMagenta` *is* the background on the
+  classic blue PowerShell window).
+- An unlabelled ad-hoc run is unchanged: no label means no tag, byte-for-byte as
+  before.
+
+**Correction to the 0.5.0 note below:** 0.5.0 did **not** reach both shares. Live
+(`\\NW-APPSERVER\NWMS_QC`) holds 0.4.1 with a pre-versioning bundle that carries
+no version string at all; only Dev (`NWMS_QC_Dev`) received 0.5.0. Live is
+therefore still awaiting its first versioned publish, which per the protocol
+happens only when Dave expressly asks.
+
 ### 0.5.0 — 2026-08-17
 
 First numbered release, and the first deployment to NW-APPSERVER.
@@ -63,8 +91,9 @@ First numbered release, and the first deployment to NW-APPSERVER.
   both artefacts, shown in the page footer, the health endpoint and the customer
   report, with the publisher enforcing that the two files agree. Before this the
   app displayed no version at all — a build in the wild could not be identified.
-- **Published to both shares**: `\\NW-APPSERVER\NWMS_QC` (Live, 8791) and
-  `\\NW-APPSERVER\NWMS_QC_Dev` (Dev, 8792), 76 files / 3.01 MB each.
+- **Published to `\\NW-APPSERVER\NWMS_QC_Dev`** (Dev, 8792), 76 files / 3.01 MB.
+  Live (`NWMS_QC`, 8791) was published earlier the same morning, *before* this
+  version bump, so it carries 0.4.1 — see the correction under 0.5.1 above.
 - **`Start Quality Records Dev Server.cmd`** added, and both launchers now refuse
   to run from the wrong share — the Live launcher in a `_Dev` folder would have
   served Dev data on Live's port, and the Dev launcher in the Live folder would

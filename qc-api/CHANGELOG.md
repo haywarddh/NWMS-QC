@@ -1,5 +1,37 @@
 # Changelog — qc-api
 
+## 0.5.1 — 2026-08-17
+
+The console now identifies itself on every line it prints.
+
+- **`-InstanceLabel` is stamped on every request-log line**, leading it:
+  `[LIVE] 2026-08-17 09:14:02  GET     /api/plans  ->  200  (7 ms)`. The label was
+  previously only in the startup banner, which this service scrolls out of view
+  itself: it logs a line per HTTP request to the same console, so within seconds
+  of real use a LIVE window and a DEV window are again two identical walls of log.
+  A left-aligned tag can be read straight down the edge of the window without
+  reading the lines.
+- **A fuller identity line every 25 requests**:
+  `---- [LIVE] qc-api v0.5.1 -- http://+:8791/ -- PID 1234 ----`. The per-line tag
+  has no room for version, address and PID. 25 is under a default 30-row window,
+  so at least one of these is on screen at any moment rather than merely usually.
+- The 500-handler's `ERROR` line carries the tag too, so the lines that matter
+  most are not the ones missing their instance.
+- **No label means no tag.** A bare `qc-api.ps1` run for ad-hoc work prints
+  exactly what it printed before.
+- Not done, deliberately: the console **window title**. Under Windows Terminal the
+  window title follows the active tab, so a background LIVE tab is not what the
+  taskbar or Alt-Tab shows; the launchers set a title already; and a title set
+  from inside a script is console-scoped, outliving the process that set it.
+  A sticky header was measured and rejected — it corrupts the line it overwrites,
+  does nothing where the buffer equals the window, and throws once output is
+  redirected.
+
+> **Version gap:** this file jumps 0.4.0 → 0.5.1. Versions 0.4.1 and 0.5.0 were
+> tagged during the deployment work without service-level notes; 0.4.1 is what
+> sits on the Live share today. The gap is left visible rather than back-filled
+> from memory.
+
 ## 0.4.0 — 2026-08-17
 
 Everything here exists to make a real NW-APPSERVER deployment possible and safe.
