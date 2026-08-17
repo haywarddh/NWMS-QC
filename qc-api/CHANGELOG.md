@@ -1,5 +1,27 @@
 # Changelog — qc-api
 
+## 0.5.2 — 2026-08-17
+
+Fixes PDF drawing upload, which was broken everywhere except the Vite dev
+server.
+
+- **`.mjs` added to the static content-type map.** pdf.js loads its rendering
+  engine as an ES module worker (`new Worker(url, { type: "module" })`), and
+  browsers strictly refuse a module script unless it is served with a
+  JavaScript MIME type. `.mjs` was missing from `Get-StaticContentType`, so it
+  fell to the `default` case -- `application/octet-stream` -- and every upload
+  of a customer drawing PDF failed with a bare, generic "could not be read"
+  message in the app, while the browser console held the real reason:
+  `Failed to load module script: ... non-JavaScript MIME type`.
+- This is not a regression from anything published this week: the local qc-api
+  instance on port 8791 had the identical bug, confirmed directly. It surfaced
+  now because testing had only ever gone through the Vite dev server, which
+  has correct module MIME handling built in and was never exposed to it.
+- Verified end to end, not just by inspecting the response header: a real File
+  object was driven through the actual `/new` upload control and rendered to a
+  preview canvas with zero console errors, against a throwaway instance running
+  the exact same build about to be published.
+
 ## 0.5.1 — 2026-08-17
 
 The console now identifies itself on every line it prints.

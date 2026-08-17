@@ -1,6 +1,6 @@
 <#
 ================================================================================
- qc-api.ps1 -- NWMS ISIR / QC plan service  (v0.5.1)
+ qc-api.ps1 -- NWMS ISIR / QC plan service  (v0.5.2)
 ================================================================================
 
  WHAT THIS IS
@@ -212,7 +212,7 @@ $ErrorActionPreference = 'Stop'
 # Service identity
 # ------------------------------------------------------------------------------
 $ServiceName    = 'qc-api'
-$ServiceVersion = '0.5.1'   # surfaced in /api/health and the startup banner
+$ServiceVersion = '0.5.2'   # surfaced in /api/health and the startup banner
 
 # Tag stamped on the front of EVERY console line the request loop writes, built
 # once here rather than per request. An unlabelled ad-hoc run gets no tag at all,
@@ -1096,6 +1096,13 @@ function Get-StaticContentType {
     switch ($Extension) {
         '.html'  { return 'text/html; charset=utf-8' }
         '.js'    { return 'application/javascript; charset=utf-8' }
+        # ES module extension. Browsers strictly enforce a JavaScript MIME type
+        # for module scripts, including a module Worker -- pdf.js loads its
+        # renderer that way. Without this case, .mjs fell to the default below
+        # (application/octet-stream) and every PDF drawing upload failed with
+        # "Failed to load module script: ... non-JavaScript MIME type", silent
+        # everywhere except the browser console.
+        '.mjs'   { return 'text/javascript; charset=utf-8' }
         '.css'   { return 'text/css; charset=utf-8' }
         '.map'   { return 'application/json; charset=utf-8' }
         '.json'  { return 'application/json; charset=utf-8' }

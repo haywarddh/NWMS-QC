@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.1"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.5.2"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,14 @@ the project-level record.
 ---
 
 ## History
+
+### 0.5.2 — 2026-08-17
+
+**PDF drawing upload fixed** — broken since it was built, everywhere except the
+Vite dev server. The static file server had no `.mjs` case in its content-type
+map, so pdf.js's module-worker renderer was served as `application/octet-stream`
+and every browser refused to run it. See `qc-api\CHANGELOG.md` for the detail;
+confirmed with a real end-to-end upload, not just a header check.
 
 ### 0.5.1 — 2026-08-17
 
