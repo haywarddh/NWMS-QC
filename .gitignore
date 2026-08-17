@@ -1,0 +1,32 @@
+# ─── Live data. Never commit. ────────────────────────────────────────────────
+# Real quality records, the photographic evidence that cannot be retaken once
+# parts have shipped, and the privileged password hash. Also customer drawings,
+# which are the customer's intellectual property, not ours to publish.
+qc-api/data/
+qc-api/Backups/
+backups/
+
+# ─── The app has its own repository ──────────────────────────────────────────
+# qc/ is a separate git repo, synced two-way with Lovable
+# (https://github.com/haywarddh/qc). Committing it here would create a second
+# source of truth for the same files and break that sync.
+qc/
+
+# ─── Build output and dependencies ───────────────────────────────────────────
+node_modules/
+dist/
+.output/
+.wrangler/
+
+# ─── Service runtime noise ───────────────────────────────────────────────────
+*.log
+*.lock
+!package-lock.json
+.publish.lock
+qc-api.lock
+
+# ─── Windows / editor ────────────────────────────────────────────────────────
+Thumbs.db
+desktop.ini
+.DS_Store
+*.tmp
