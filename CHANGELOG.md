@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.6.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.6.1"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,21 @@ the project-level record.
 ---
 
 ## History
+
+### 0.6.1 — 2026-08-17
+
+**Fixed mojibake on the Capability page** and in `fonts.css`'s comments —
+em dashes, an ellipsis, an en dash, a middle dot, σ and ✳ had all been
+saved as UTF-8 text that was first misread as Windows-1252 and re-saved,
+turning one correct character into two or three wrong ones (an em dash
+became `â€"`, for instance). Confirmed present in the repository before
+this session's own work began, so not something introduced by anything
+built today. A repo-wide search found only these two files genuinely
+affected — every other file that matched an initial broad search turned
+out to contain correctly-encoded characters (±, °, ·) that only
+*resembled* the corruption pattern; each was individually verified,
+line by line, before either file was touched, specifically to avoid
+"fixing" text that was already right.
 
 ### 0.6.0 — 2026-08-17
 

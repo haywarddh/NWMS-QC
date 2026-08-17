@@ -1,5 +1,10 @@
 # Changelog — qc-api
 
+## 0.6.1 — 2026-08-17
+
+Version bump only -- nothing in this file changed. See the root `CHANGELOG.md`;
+the fix is a source-encoding correction in two front-end files.
+
 ## 0.6.0 — 2026-08-17
 
 Adds `/api/scans`, a second blob store alongside `/api/attachments` — one
