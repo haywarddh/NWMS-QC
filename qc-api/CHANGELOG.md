@@ -1,5 +1,10 @@
 # Changelog — qc-api
 
+## 0.6.2 — 2026-08-18
+
+Version bump only -- nothing in this file changed. The fix is in
+DrawingCanvas.tsx; see the root `CHANGELOG.md`.
+
 ## 0.6.1 — 2026-08-17
 
 Version bump only -- nothing in this file changed. See the root `CHANGELOG.md`;

@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.6.1"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.6.2"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,22 @@ the project-level record.
 ---
 
 ## History
+
+### 0.6.2 — 2026-08-18
+
+**Fixed: the drawing zoom controls (−/%/+/fit) had no effect.** They sit
+inside the same canvas that captures the pointer on press to track a
+possible drag-pan, and nothing stopped that capture from happening when
+the press landed on a button first — so the canvas grabbed the interaction
+before the button's own click could ever fire. The zoom percentage shown
+in a bug report was real; it came from the mouse wheel or a pinch gesture,
+a separate code path with no such problem, which is what made the buttons
+look broken while zooming itself clearly worked. The PMP balloons on the
+drawing solve the identical problem already, one layer down — the fix
+gives the three zoom buttons the same guard. Verified against a real
+loaded drawing with the actual pointer-event sequence a click produces,
+not just a synthetic click: zoom in, zoom out and fit all move the
+percentage and the drawing's visible scale exactly as expected.
 
 ### 0.6.1 — 2026-08-17
 
