@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.9.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.10.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,28 @@ the project-level record.
 ---
 
 ## History
+
+### 0.10.0 — 2026-08-18
+
+**Two annotation-flow fixes from real use.**
+
+- **Fixed: the Nominal/Upper/Lower tolerance fields on an existing PMP could
+  not accept a decimal point.** Typing "13.5" silently collapsed to "13" —
+  the input re-derived its displayed value from the stored number on every
+  keystroke, and `Number("13.")` is `13`, so the "." never survived long
+  enough to type a second digit after it. Clearing a field also used to
+  silently store `0` rather than "no value"; it now correctly stores nothing.
+- **Unified how a characteristic's inspection frequency is set.** Creating a
+  PMP used to offer a single "Inspection interval" dropdown, while editing an
+  existing one separately offered a fuller multi-select "Check frequency"
+  checklist (needed for AIAG-VDA-style compound frequencies, e.g. "twice an
+  hour AND at shift start AND at material batch change") — two different
+  controls for what looked like the same thing, because the second one was
+  added later and the first was never retired. Creating a PMP now uses the
+  same checklist editing already did, and writes directly to the field the
+  printed control plan already treats as canonical — so a newly-created
+  characteristic's frequency is real, saved data immediately, not something
+  that only becomes correct after a save-and-reload round trip.
 
 ### 0.9.0 — 2026-08-18
 

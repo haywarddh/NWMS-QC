@@ -1,5 +1,14 @@
 # Changelog — qc-api
 
+## 0.10.0 — 2026-08-18
+
+Version bump only -- nothing in this file changed. Both fixes (the Nominal/
+Upper/Lower decimal-point bug, and unifying PMP creation onto the same
+`frequencyTriggers` field editing already used) are front-end-only, touching
+`plan.tsx`'s own component state and the shape of the `Pmp` object within the
+same opaque plan JSON blob this service already stores and returns
+untouched. See the root `CHANGELOG.md`.
+
 ## 0.9.0 — 2026-08-18
 
 Version bump only -- nothing in this file changed. The evidence-vs-structure
