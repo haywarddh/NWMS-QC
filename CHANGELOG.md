@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.10.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.11.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,63 @@ the project-level record.
 ---
 
 ## History
+
+### 0.11.0 — 2026-08-18
+
+**A PMP's risk analysis and a process FMEA row used to be four disconnected
+things that nothing kept in agreement.** Creating a characteristic filled in
+its own embedded failure-mode fields; the FMEA page kept a separate,
+step-scoped row with its own scoring; a shared template library held a third
+copy; and a manual "Import existing per-PMP FMEA" button was the only bridge
+between the first two — deliberately leaving the original in place once
+clicked, so the two could silently drift apart forever after. The printed
+control plan already showed the seam: "what we measure" and "what we
+analysed" were two sections grouped by the same step headings with no
+cross-reference between them.
+
+This releases the model instead: **every PMP now carries exactly one of two
+explicit kinds of risk analysis.** A **one-off** analysis is written
+specifically for that PMP — for a check unique enough to this product and
+this point in the route that sharing it would mean nothing (a specialised
+coating check, a visual check for cracking or scuffing). A **linked**
+analysis points at a shared process FMEA row that may be verified by several
+PMPs at once (several dimensional checks all verifying "formed geometry" at
+one press-brake step). A linked PMP's process step always comes from the row
+it points at — never a field of its own — so the two cannot disagree; the
+relationship is one row to many PMPs, never the reverse.
+
+- **PMP creation and editing gained a Risk analysis section** with an
+  explicit One-off / Linked choice. Linked offers either an existing process
+  FMEA row or a compact inline form to create a new one on the spot, without
+  leaving the drawing. One-off keeps today's failure-mode fields, now backed
+  by a working knowledge-base picker (below).
+- **Two independent actions on a one-off PMP:** *Promote to a process FMEA*
+  turns it into a shared row other PMPs on this plan can link to; *Save to
+  knowledge base* banks its wording for future plans. Either, both, or
+  neither — a check can be genuinely unique to this plan while still worth
+  remembering, or worth sharing within this plan without being proven enough
+  to bank permanently.
+- **Fixed: picking a knowledge-base entry could silently overwrite
+  everything already typed**, severity/occurrence/detection included, a beat
+  after the pick. Picking now only ever fills fields that are still blank;
+  applying the suggested ratings, or replacing the line wholesale, are both
+  separate, explicit choices.
+- **The printed report's Control Plan and Process Risk sections now
+  cross-reference each other** — a Risk analysis column on the control plan
+  showing which failure line covers each characteristic (or that it is a
+  one-off), and a Verified by column on the process risk table showing which
+  characteristics back each failure line. The "no FMEA recorded" gap is
+  raised per characteristic now, not once for the whole plan — a single
+  well-covered characteristic could previously hide every other one that had
+  nothing behind it at all.
+- **Deleting a shared row that still has PMPs linked to it now asks first**,
+  and un-links rather than orphans them — the affected PMPs fall back to a
+  one-off analysis with that row's wording carried over intact, matching how
+  removing a route step has always treated its FMEA rows.
+- New defensive check: a PMP linked to a row that no longer exists (only
+  reachable by hand-editing a record, not through the app itself) is now
+  surfaced as a blocker on Review, with a direct way to re-link or drop back
+  to one-off from the PMP's own edit panel.
 
 ### 0.10.0 — 2026-08-18
 
