@@ -1,5 +1,15 @@
 # Changelog — qc-api
 
+## 0.7.0 — 2026-08-18
+
+Version bump only -- nothing in this file changed. `/api/library` already
+stores and returns the shared-library payload as one opaque blob, validating
+only that `templates`/`removedSeeds` are present before writing the raw
+request body verbatim -- the new `stationCodes`/`removedStationCodes` keys
+(and `appliedTemplateId` on a plan's own state, via the existing `/api/plans`
+endpoint) round-trip with zero server-side awareness of either name, the same
+way `routeTemplates`/`stationFmea` already do. See the root `CHANGELOG.md`.
+
 ## 0.6.2 — 2026-08-18
 
 Version bump only -- nothing in this file changed. The fix is in

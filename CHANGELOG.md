@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.6.2"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.7.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,50 @@ the project-level record.
 ---
 
 ## History
+
+### 0.7.0 — 2026-08-18
+
+**Route templates can now be created and duplicated, not just edited.** Until now
+the only way to make the single seeded template mean something specific was to
+rename it in place — there was no way to start a second one from blank, only to
+snapshot one from an already-built plan.
+
+- **"+ New template"** starts a blank, named template, open and ready to build.
+- **Duplicate** copies an existing template — fresh step ids, independent from
+  then on — the fastest way to start a close variant of one that already exists.
+- Templates carry a **free-text description**: what product type or production
+  method the route is for, shown at the point of picking one to apply. Deliberately
+  not a structured field or an automated match — which template applies is a
+  judgement call, and the description is guidance for the person making it, not a
+  rule the app enforces.
+
+**A new shared Station Code Library** replaces free-text station codes — on both
+the route step editor and the FMEA knowledge base's station rows — with a picker
+onto one growable list, so "GI-01" always means the same real station wherever
+it's picked. An inline "+ Add new code" covers anything not in the list yet, and
+reuses a near-duplicate (different case, stray spacing) rather than creating a
+near-twin. Seeded from the 29 real codes already in the standard route.
+
+**Fixed a correctness gap the above made newly dangerous.** Re-applying a route
+template preserved a plan's existing step ids — and with them, its FMEA rows and
+PMPs — wherever a step's code matched, with no idea whether it was re-applying the
+*same* template or a completely *different* one. Harmless while only one template
+existed. The moment a second template reuses a code like "GI-01" for a different
+process, applying it to a plan already running the first would have silently
+attached the old step's history to an unrelated one. Applying a template now only
+preserves ids on a genuine re-apply of the template already on the plan; a
+different template does a clean replace, with a clear warning beforehand that
+existing FMEA/PMP links on steps outside the new template will be orphaned — not
+deleted.
+
+**FMEA failure lines now carry their own reference number** (FM-01, FM-02…),
+independent of route-step numbering. Previously the only number anywhere near a
+failure line was its parent step's, printed once above the whole group — read at a
+glance, that looks like the failure line's own number, which is the mix-up this
+fixes. Numbers are assigned once, in the order rows are created, and never reused
+after a row is deleted — so a number once shown or discussed keeps meaning the same
+row. Shown on the FMEA page, the customer report's process-risk table and its
+high-priority list in full, and the internal review screen's equivalent.
 
 ### 0.6.2 — 2026-08-18
 
