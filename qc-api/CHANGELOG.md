@@ -1,5 +1,15 @@
 # Changelog — qc-api
 
+## 0.9.0 — 2026-08-18
+
+Version bump only -- nothing in this file changed. The evidence-vs-structure
+lock split is entirely client-side (a new `isEvidenceLocked` check and six
+mutators in the front end's own store); every field it touches -- readings,
+CSV uploads, manual checks, gauge studies, the InspecVision scan reference --
+already round-trips through `/api/plans/{id}` as part of the same opaque
+plan JSON blob this service has always stored and returned untouched. See
+the root `CHANGELOG.md`.
+
 ## 0.8.0 — 2026-08-18
 
 Version bump only -- nothing in this file changed. The new issue-blocking

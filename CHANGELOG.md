@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.8.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.9.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,38 @@ the project-level record.
 ---
 
 ## History
+
+### 0.9.0 — 2026-08-18
+
+**Once issued, the standard freezes but the evidence keeps growing.** Prompted
+by a question the app's own explanation of itself raised: is an ISIR a
+one-shot document built once and submitted for approval, or does the issued
+record keep serving as the live controlled standard for the rest of the
+part's production life? The answer settled the design: the latter. The route,
+characteristics, tolerances and risk analysis an issued plan was judged
+against stay frozen forever, exactly as before — but new evidence from
+ongoing production can now keep landing on that same record, specifically so
+Cpk and trend analysis can be tracked over the part's life instead of being
+frozen at a single first-article sample.
+
+- **New evidence — sample readings, CSV imports, manual checks, capability
+  studies, InspecVision re-scans — can be added to an issued record.**
+  Deliberately narrow: only *adding* opens up. Removing or editing any
+  evidence already on the record stays exactly as locked as every structural
+  field, matching the app's existing "orphans are cheap, destroyed evidence is
+  not" rule for attachments and scan data.
+- **A gauge study can be created *and filled in* after issue, not just
+  created.** A capability study is built up over repeated trials as the
+  physical R&R is actually performed — unlocking creation alone would have
+  left a study that could never be completed once issued.
+- **Re-running an InspecVision merge keeps working after issue** — the
+  scenario this was built for: a part stays in production for months after
+  its first article is approved, and the scan data should keep accumulating
+  against the same controlled record the whole time.
+- The lock banner and its wording now say correctly, wherever they appear,
+  that the standard is frozen while evidence is not — previously every locked
+  state read as "contents are frozen," which stopped being accurate the
+  moment this shipped.
 
 ### 0.8.0 — 2026-08-18
 
