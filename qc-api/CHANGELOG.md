@@ -1,5 +1,15 @@
 # Changelog — qc-api
 
+## 0.8.0 — 2026-08-18
+
+Version bump only -- nothing in this file changed. The new issue-blocking
+rule, the scan-coverage check and the override's `issuedOverrideBy` field are
+all client-side logic plus one more optional key on a plan's own JSON, which
+`/api/plans/{id}` already stores and returns untouched (only `meta.id` is
+ever inspected server-side). The password check it reuses for the override
+-- `GET /api/privileged` / `POST /api/privileged/verify` -- already existed
+for un-archiving and needed no changes. See the root `CHANGELOG.md`.
+
 ## 0.7.0 — 2026-08-18
 
 Version bump only -- nothing in this file changed. `/api/library` already

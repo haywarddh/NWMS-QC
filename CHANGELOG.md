@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.7.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.8.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,36 @@ the project-level record.
 ---
 
 ## History
+
+### 0.8.0 — 2026-08-18
+
+**A record can no longer be issued while evidence is incomplete.** Prompted by
+a real incident: a batch shipped without its 3D scan because the paperwork was
+still the old Excel ISIR, a plain document with no way to refuse to be
+completed — whether the gap got caught came down to someone remembering to
+check under time pressure, which didn't happen. This is the point of building
+software instead: it can refuse, where a spreadsheet never could.
+
+- **"Issued" is blocked while any characteristic has missing or failing
+  evidence** — the same "any failure blocks readiness" rule that already
+  governs every other characteristic in this app, now actually enforced
+  rather than only ever displayed.
+- **Also blocked when a route step marked as needing a 3D scan has no
+  characteristic covering it at all** — the deeper version of the same gap,
+  and the one that likely matters most: previously invisible everywhere,
+  because every existing check only ever asked "is this characteristic
+  satisfied," never "does this step that needs one have one in the first
+  place." The printed customer report used to silently drop such a step from
+  the document entirely rather than showing a gap — fixed alongside this.
+- **A password-gated override exists for genuine exceptions** — refused by
+  default, same as the app's one other fail-closed mechanism (un-archiving);
+  using it requires initials and is recorded permanently against the record,
+  visible on its approval trail.
+- Found and fixed a real bug while building this: the Review page's "What
+  blocks issue" panel silently excluded InspecVision-verified characteristics
+  from its evidence check, and never checked failing readings at all, for any
+  characteristic type — it now shares the same underlying check as everywhere
+  else instead of a second, narrower one that had quietly drifted.
 
 ### 0.7.0 — 2026-08-18
 
