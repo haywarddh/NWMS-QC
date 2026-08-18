@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.11.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.11.1"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,21 @@ the project-level record.
 ---
 
 ## History
+
+### 0.11.1 — 2026-08-19
+
+**Fixed: a field that already held a real value — a default rating, a
+previous reading — didn't clear when you started typing over it.** Clicking
+in and typing just inserted at wherever the browser put the cursor, so
+typing "8" into a severity field already showing "5" produced "58", not
+"8" — indistinguishable, at a glance, from the value never having been
+editable at all. Every field like this (severity/occurrence/detection
+ratings, occurrences-on-drawing, nominal/upper/lower once a PMP already has
+values) now selects its whole contents the instant it gains focus, so the
+first keystroke replaces rather than inserts. Left alone on purpose: the
+longer free-text fields (failure mode, effect, cause, control, description)
+still work as click-to-edit-in-place, since select-all-on-focus there would
+mean one stray keystroke could wipe a whole typed sentence.
 
 ### 0.11.0 — 2026-08-18
 
