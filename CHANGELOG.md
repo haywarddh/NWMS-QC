@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.12.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.13.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,25 @@ the project-level record.
 ---
 
 ## History
+
+### 0.13.0 — 2026-08-19
+
+**A PMP created without a marker — or one whose marker landed in the wrong
+place — could never be fixed.** "Add PMP manually" has always been useful
+for a characteristic that isn't really a point on the drawing (e.g. a
+general note), but there was no way back from it: no way to give it a
+marker later, and no way to nudge an existing marker once placed, short of
+deleting the PMP and starting over.
+
+- **Any PMP's edit panel now shows its marker status, with a button to fix
+  it** — "Place on drawing" for one with no marker, "Move marker" for one
+  that already has one. Either puts the drawing into the same click-to-place
+  mode used when creating a new PMP, except the next click updates that
+  PMP's position instead of creating another one.
+- Switching to a different PMP while mid-move cancels the move rather than
+  leaving it silently pointed at whichever PMP "Move marker" was clicked on
+  — otherwise a stray click on the drawing afterward would have moved the
+  wrong PMP, or (worse) silently created an unrelated new one.
 
 ### 0.12.0 — 2026-08-19
 
