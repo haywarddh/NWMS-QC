@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.19.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.19.1"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,44 @@ the project-level record.
 ---
 
 ## History
+
+### 0.19.1 — 2026-08-19
+
+**A real drawing, tested directly, exposed two separate problems: the sheet
+could render silently clipped, and the title block parser could occasionally
+read a wrong value instead of leaving a field blank.**
+
+- **The drawing now fits the space it actually has.** It always rendered at
+  100% width with no floor under how tall that made it, and "Fit drawing"
+  just reset to that same 100% — on a wide enough window, a landscape sheet
+  taller than the fixed drawing panel had its bottom silently cut off, with
+  nothing to show anything was missing. Both the initial view and "Fit
+  drawing" now compute the zoom that actually fits the sheet's real height
+  into the space available. Verified directly against a real A2 drawing: at
+  a shell width where 100% would have clipped it, it now opens at exactly
+  the zoom the fit math calls for, confirmed pixel-for-pixel against the
+  panel's actual bounds.
+- **The title-block parser no longer searches the whole page** when the
+  title block itself doesn't have a same-line match — found directly that
+  this could match a label word used in an ordinary sentence elsewhere on
+  the drawing ("...refer to Technical...") and return a meaningless
+  fragment as the value. Every label pattern also gained a word-boundary
+  fix: "ref" and "no" are common prefixes of ordinary words (refer,
+  reference; note, normal, nominal), and neither was anchored to require a
+  complete word.
+- **The parser now also reads column-style title blocks** — a row of
+  headers ("drawing number.", "issue.") with the actual values one or more
+  rows below, each lined up under its own header by position rather than
+  sharing a line with it. Found directly that a real customer drawing used
+  exactly this layout and had no same-line match anywhere on the sheet.
+- **A render that runs unusually long now times out with a visible message
+  and a link to open the original PDF**, instead of an indefinite silent
+  spinner or a blank sheet with no explanation. Investigated a render that
+  initially took over two minutes on one real drawing; on a clean retry it
+  rendered in under a quarter of a second every time, so this looks to have
+  been this session's own load rather than a property of that file — but
+  the timeout stays in either case, since a render that genuinely never
+  returns is a real possibility worth guarding regardless of cause.
 
 ### 0.19.0 — 2026-08-19
 
