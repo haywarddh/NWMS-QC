@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.16.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.17.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,30 @@ the project-level record.
 ---
 
 ## History
+
+### 0.17.0 — 2026-08-19
+
+**Popping out the drawing now reclaims its space for the control plan, and
+either window can bring it back.** On a drawing with many PMPs still to
+place, the inline drawing panel sat there at full height even after the
+whole point of popping it out was to work from the PMP list instead.
+
+- **Popping out now collapses the inline drawing to a compact strip**,
+  letting the control-plan table below it move up into the space the
+  620px-tall canvas was using — the page bar (for switching sheets) stays,
+  since that is still useful while popped out, but the canvas itself now
+  renders in exactly one window at a time rather than sitting idle in both.
+- **A "Re-dock" button in the popped-out window** closes it and restores
+  the inline drawing, and **a "Bring it back" button in the same spot on
+  the plan page** does the same from the other side — whichever window is
+  in front when you are done.
+- Closing the popout by its own window controls, without using either
+  button, is caught too: the plan page notices within a second and
+  restores the inline drawing on its own rather than being left thinking
+  it is still popped out.
+- Clicking "Pop out drawing" again while it is already open still just
+  brings the existing window to the front, now labelled "Focus popped-out
+  window" so it reads as a different action from opening it fresh.
 
 ### 0.16.0 — 2026-08-19
 
