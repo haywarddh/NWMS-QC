@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.17.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.18.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,33 @@ the project-level record.
 ---
 
 ## History
+
+### 0.18.0 — 2026-08-19
+
+**Importing the drawing is now the actual first step on the Drawing & plan
+page, and a native CAD PDF export fills in its own part details.** Part
+number, customer, drawing number and issue used to sit above the drawing
+before anything was loaded — retyping what the drawing's own title block
+already says, on a page whose first real action is importing that drawing.
+
+- **The four part-detail fields are now hidden until there is something to
+  show** — a loaded drawing, or part details already collected by the
+  "New ISIR" wizard, which still asks for them earlier. On a genuinely
+  fresh plan, the panel's first and only content is the import prompt.
+- **A native CAD PDF export (SolidWorks/AutoCAD/Inventor "print to PDF" —
+  anything that keeps its text real and selectable) has its title block
+  read automatically**, filling in whichever of the four fields are still
+  blank. A scanned or photographed drawing has no text layer to read at
+  all, and simply leaves the fields exactly as blank and hand-fillable as
+  they always were — there is no OCR here, deliberately, and nothing about
+  this ever overwrites a value already typed.
+- **A parsed value is always a starting point, never asserted as
+  correct** — an amber note ("check these before continuing") appears
+  whenever anything was read automatically, and every field stays a plain
+  editable box exactly as before. Verified against a hand-built test PDF
+  with a dense, multi-field title-block row and unrelated decoy text
+  elsewhere on the sheet: every field landed on the right value and the
+  decoys were correctly ignored.
 
 ### 0.17.0 — 2026-08-19
 
