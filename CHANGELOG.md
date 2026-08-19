@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.14.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.15.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,29 @@ the project-level record.
 ---
 
 ## History
+
+### 0.15.0 — 2026-08-19
+
+**The leader label is now plain text, sized like a real CAD annotation.**
+The circular numbered badge and its value/tolerance chip, carried straight
+over from the old point marker, no longer fit the new box-and-leader style
+— and repeated a nominal/tolerance that is already on the drawing itself.
+
+- **The label is now just the PMP reference as plain text** (e.g. "PMP01"),
+  drawn at the end of the leader line — no circle, no dimension chip.
+- **The label's text height is a fraction of the drawing's own width**,
+  the same normalised convention the box already uses, rather than a fixed
+  screen size — so, like a real CAD leader, it scales together with the
+  drawing and with zoom instead of staying constant. Verified directly: a
+  130% zoom grew the label by exactly 130%, matching the box precisely.
+  The text size itself is tuned by eye for a typical A4–A2 engineering
+  sheet, not measured from the file — nothing about an uploaded image or
+  PDF reliably says what real sheet size it was printed at, so if it reads
+  too large or small on your actual drawings, it's a one-line constant to
+  retune.
+- Still independently draggable and still selects the PMP on a plain
+  click, exactly as before — only how the label is drawn changed, not how
+  it behaves.
 
 ### 0.14.0 — 2026-08-19
 
