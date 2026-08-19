@@ -1,6 +1,8 @@
 param(
     [string]$Destination = '\\NW-APPSERVER\NWMS_QC',
-    [string]$NetworkUrl = 'http://nw-appserver:8791',
+    # Blank means "work it out from -Destination" (see below) -- pass this
+    # explicitly only to override that, e.g. testing against a different host.
+    [string]$NetworkUrl = '',
     [switch]$WhatIf
 )
 
@@ -60,6 +62,19 @@ $ErrorActionPreference = 'Stop'
 $projectRoot     = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot)).TrimEnd('\')
 $destinationPath = [IO.Path]::GetFullPath($Destination).TrimEnd('\')
 $scriptsSource   = [IO.Path]::GetFullPath($PSScriptRoot).TrimEnd('\')
+
+# Dev and Live are different shares AND different ports (8792 / 8791) -- worked
+# out once, here, from which share is being published to, so every message
+# below (the banner, and the "check it came up" URL at the end) agrees with
+# where this publish is actually going. Previously $NetworkUrl was a single
+# hardcoded default that never changed for a Dev publish, so the app-URL and
+# health-check lines this script prints always read 8791 even when publishing
+# to NWMS_QC_Dev -- confirmed for real (Dave was correctly running Dev on
+# 8792 while this script told him to check 8791).
+$isDevShare = $destinationPath -match '_Dev\\?$'
+if (-not $NetworkUrl) {
+    $NetworkUrl = if ($isDevShare) { 'http://nw-appserver:8792' } else { 'http://nw-appserver:8791' }
+}
 
 $sourceApiDir    = Join-Path $projectRoot 'qc-api'
 $sourceApiScript = Join-Path $sourceApiDir 'qc-api.ps1'
@@ -643,10 +658,10 @@ the destination, delete the failed backup folder, and try again.
     Write-Host ('  Backups\ and Releases\ apart from the new folder(s) above')
     Write-Host ''
     Write-Host 'NEXT, BY HAND ON NW-APPSERVER (nothing is done remotely):' -ForegroundColor Cyan
-    # Name the launcher that matches THIS destination. Both are published to both
+    # Name the launcher that matches THIS destination ($isDevShare computed once,
+    # near the top, alongside $NetworkUrl). Both launchers are published to both
     # shares and each refuses to run from the wrong one, so telling someone to run
     # the Live launcher after a Dev publish sends them into a refusal message.
-    $isDevShare = $destinationPath -match '_Dev\\?$'
     if ($isDevShare) {
         Write-Host '  1. Start the service: run "Start Quality Records Dev Server.cmd" on NW-APPSERVER.'
         Write-Host '     (the LIVE launcher in this folder will refuse -- it would serve Dev data on Live''s port)'
