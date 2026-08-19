@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.15.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.15.1"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,26 @@ the project-level record.
 ---
 
 ## History
+
+### 0.15.1 — 2026-08-19
+
+**Polished the box-and-leader style: rounded corners, an arrowhead, and a
+proper edge-to-edge connection.** The box and label were sharp-cornered
+rectangles, the label had no visible outline of its own, and the leader
+line ran centre-to-centre — relying on the box's own fill to visually hide
+the segment that crossed into it, rather than actually stopping there.
+
+- **The highlight box and the label chip both now have rounded corners.**
+  The box's radius is a percentage of its own size, so it scales with the
+  drawing exactly the way the box itself does, rather than looking
+  proportionally different at every zoom level.
+- **The label now has a permanent visible chip** — a light background and a
+  coloured border matching the box — instead of only showing an outline
+  once selected.
+- **The leader line now runs from the label's actual edge to the box's
+  actual edge**, computed geometrically rather than assumed, with an
+  arrowhead at the box end pointing at the feature — verified by hand
+  against the exact stored coordinates, not just by eye.
 
 ### 0.15.0 — 2026-08-19
 
