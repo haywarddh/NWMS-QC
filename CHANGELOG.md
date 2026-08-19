@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.11.1"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.12.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,35 @@ the project-level record.
 ---
 
 ## History
+
+### 0.12.0 — 2026-08-19
+
+**Creating a PMP and editing one are now the same form.** A characteristic
+used to exist in two different shapes: a compact draft you filled in and
+committed, then — once created — a fuller panel with sections (gauge and
+frequency detail, photographs, an InspecVision scan) the draft never had,
+under different field labels for the same values ("What is being
+controlled" vs. "Characteristic"). Placing a marker, or clicking Add PMP
+manually, now creates the real PMP immediately, with sensible defaults, and
+opens the exact same panel used to edit any other one — nothing is unlocked
+later, because there is no "later" left to unlock it in.
+
+- **Deleted the entire separate draft form** — one panel, used for both.
+  Every field that exists while editing now also exists the instant a PMP
+  is created.
+- **Result type (Actual value / Good / no good) can now be changed after
+  creation.** It used to be fixed at the moment of creation, which is a
+  moment that no longer exists — so this was a necessary consequence of
+  unifying the form, not an independent decision. This also un-blocks a
+  real dead end: a PMP created as "Actual value" could never attach an
+  InspecVision scan (scans need "Good / no good"), with no way back.
+- **The "Linked" risk-analysis option can now create a brand-new shared
+  process FMEA row inline, from any PMP's own edit panel** — previously
+  only available while a PMP was still being drafted; editing an existing
+  one could only link to a row that already existed.
+- "Cancel" on a just-created, still-blank PMP is now simply Delete, in the
+  same characteristics table every other PMP is deleted from — there is no
+  longer a distinct not-yet-real state for a separate Cancel to discard.
 
 ### 0.11.1 — 2026-08-19
 
