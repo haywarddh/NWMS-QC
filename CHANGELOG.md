@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.20.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.21.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,34 @@ the project-level record.
 ---
 
 ## History
+
+### 0.21.0 — 2026-08-20
+
+**A drawing can now be exported with its annotations baked in as a real
+PDF** — "Export annotated PDF" on the Drawing & plan page saves a new file
+carrying the same boxes, leader lines and labels the interactive canvas
+shows, for handing to Production Kanban so the shop floor can see what must
+be controlled without this app open.
+
+- **Genuine vector graphics, not a screenshot.** The annotations are drawn
+  directly into the PDF's own page content, so the result stays sharp at
+  any zoom and prints properly, the same way the source drawing already
+  does — a source PDF's own pages are annotated in place; a plain
+  image upload (a scan or photo, no PDF underneath) gets a new PDF built
+  around it at the image's own full resolution, not the small preview used
+  for the page-picker strip.
+- **Verified by rendering the actual output back and checking pixels
+  against the maths**, not just by eye: exported a real customer drawing
+  with test markers, rendered the result, and sampled pixel colour at the
+  exact expected position — the alpha-blended colour matched the formula
+  to the last digit. Also checked a page carrying real PDF rotation
+  metadata (found no real example of this among available drawings, so
+  built one to test against): positioning and the label text's own
+  upright orientation both came out correct.
+- Only PMPs with a marker actually placed on the drawing are included, and
+  only what a page shows — the same filter the canvas itself already uses.
+  A plan with no drawing loaded has nothing to export from; every other
+  combination (zero PMPs, a locked plan, multiple sheets) exports fine.
 
 ### 0.20.0 — 2026-08-19
 
