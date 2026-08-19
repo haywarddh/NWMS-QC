@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.15.1"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.16.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,30 @@ the project-level record.
 ---
 
 ## History
+
+### 0.16.0 — 2026-08-19
+
+**The drawing can now be popped out into its own window**, for an engineer
+annotating on a two-monitor setup — drag it to a second monitor and fill the
+screen there, while the characteristics list and edit panel stay put on the
+first.
+
+- **"Pop out drawing"**, next to the drawing on the Drawing & plan page,
+  opens the drawing alone in a new window — just the drawing, its zoom
+  controls, and a Fullscreen button, with nothing else from the app
+  competing for space on the second monitor.
+- **The two windows stay in live sync, in both directions.** Selecting a
+  PMP, drawing a new box, or dragging a box or label in either window
+  updates the other immediately. There is still only one real copy of the
+  plan: the popout carries no state and no autosave of its own, and every
+  change it makes is carried out by the main window's existing mutators —
+  the same way a remote control asks a TV to change channel rather than
+  tuning itself. Verified directly: a box dragged in the popout landed at
+  the exact same coordinates the main window would have produced itself.
+- Clicking "Pop out drawing" again while the window is still open brings it
+  to the front instead of opening a second one.
+- If a browser's popup blocker steps in, the button now says so in plain
+  terms rather than silently doing nothing.
 
 ### 0.15.1 — 2026-08-19
 
