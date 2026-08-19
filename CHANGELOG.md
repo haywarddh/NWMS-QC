@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.19.1"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.20.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,36 @@ the project-level record.
 ---
 
 ## History
+
+### 0.20.0 — 2026-08-19
+
+**Two more sources feed the auto-filled import fields, for the parts of a
+title block that are often never labelled at all.** Testing against a real
+customer drawing found only drawing number and issue came back — the same
+sheet had no "CUSTOMER:" label anywhere (it is the drafting company's own
+drawing, from their side) and no separate "part number" label either.
+
+- **A part number and a short description are now also read from the
+  drawing FILE's own name** — "1394250-2-148-01- Transfer Rail 2992.5 Long
+  Type 2.pdf" splits into a part number and a part title, independently of
+  whatever the title block itself does or doesn't label. This works the
+  same regardless of which CAD package exported the file, since the
+  filename is chosen by whoever saved it, not the software.
+- **The customer name now falls back to the company's own website**, when
+  no "CUSTOMER:"/"CLIENT:" label exists on the sheet at all — a title block
+  carrying "www.whittan.com" now fills in "Whittan" rather than leaving
+  customer blank. Only used when the direct label search finds nothing, so
+  an explicitly labelled customer field always wins where one exists.
+- **The "New ISIR" wizard's Part title field is now filled in too**, the
+  first field this reads that the Drawing & plan page doesn't have.
+- Verified directly against the same real drawing this was built for: all
+  five fillable fields (part number, customer, part title, drawing number,
+  issue) now come back correctly, up from two before this release — only
+  "Plan owner" is left blank, since nothing on a customer's drawing could
+  reasonably say who at NWMS is accountable for the plan.
+- These remain exactly what they have always been: a starting point in an
+  ordinary editable field, never asserted as correct, and never applied
+  over something already typed.
 
 ### 0.19.1 — 2026-08-19
 
