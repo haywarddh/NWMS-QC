@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.13.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.14.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,34 @@ the project-level record.
 ---
 
 ## History
+
+### 0.14.0 — 2026-08-19
+
+**Replaced the simple circular marker with a shaded highlight box and an
+independently-positioned leader/label.** A single dot could only ever point
+at one location — it could not show how much of the drawing a dimension
+actually covers, and on a dense drawing a cluster of dots and their value
+chips could easily overlap the very features they were meant to identify.
+
+- **Drawing a new annotation now drags out a box** around the feature
+  instead of a single click — or just click, for a sensible default-sized
+  box centred on the click. Either way, a leader line and a numbered label
+  appear automatically, offset into clear space beside the box.
+- **The box, its four corner handles, and the label are all independently
+  draggable** once placed — grab the box to move it, a corner to resize it,
+  or the label to reposition it without touching the box at all. No mode to
+  enter first; this works any time the plan isn't frozen.
+- **The box scales with the drawing itself as it is zoomed**, so it keeps
+  covering the same real feature at any zoom level — unlike the label,
+  which deliberately stays a constant, readable size the way the old
+  marker always did.
+- Every marker placed under the old single-point model is upgraded
+  automatically to a small default box in the same place, with its own
+  independently-adjustable leader — nothing needs to be manually redrawn,
+  though most will still want their box resized to actually frame the
+  right feature.
+- The printed customer report is unchanged for now — it still prints the
+  simple numbered circle this replaces in the interactive editor.
 
 ### 0.13.0 — 2026-08-19
 
