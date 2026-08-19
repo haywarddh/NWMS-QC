@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.18.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.19.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,23 @@ the project-level record.
 ---
 
 ## History
+
+### 0.19.0 — 2026-08-19
+
+**The "New ISIR" wizard now leads with the drawing too.** It previously
+required part number and customer before it would even let you load the
+drawing — the more literal version of the same "retype what the drawing
+already says" problem 0.18.0 fixed on the Drawing & plan page.
+
+- **Step 1 is now "Customer drawing," step 2 is "Part details."** Loading
+  the drawing first and reading its title block (same native-CAD-PDF
+  parsing as 0.18.0) means step 2 often opens already filled in — check it,
+  adjust anything, and continue.
+- **"Skip for now" still works exactly as before**, now on step 1: type the
+  part details by hand with no drawing yet if that is genuinely how you want
+  to start, and add the drawing later from the Drawing & plan page.
+- Nothing about step 3 (confirm & open) changed — same summary, same
+  "starts the ISIR" action.
 
 ### 0.18.0 — 2026-08-19
 
