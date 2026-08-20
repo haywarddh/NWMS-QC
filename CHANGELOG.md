@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.21.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.22.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,27 @@ the project-level record.
 ---
 
 ## History
+
+### 0.22.0 — 2026-08-20
+
+**The customer report now shows the same box-and-leader drawing the
+workbench and the annotated PDF export both use**, instead of the older
+plain numbered circle. All three now share the exact same positioning
+maths (a common `leader-geometry.ts` module), so what an engineer places on
+the drawing, what gets exported, and what the customer reads are always
+the same picture.
+
+- The report draws each characteristic's box, leader line and label exactly
+  where it was placed on the sheet — full PMP reference text on the label,
+  not just a number.
+- This page has its own stricter rule, stated at the top of the file since
+  the app was first built: colour is never the only signal, because it
+  gets photocopied in mono and some readers are colourblind. The
+  interactive canvas and the PDF export both mark a critical characteristic
+  by colour alone, which is fine on a screen — here, a critical box, leader
+  line and label are also drawn with visibly more weight and carry the same
+  ✳ this app already uses everywhere else for "critical", so the
+  distinction survives with the colour stripped out.
 
 ### 0.21.0 — 2026-08-20
 
