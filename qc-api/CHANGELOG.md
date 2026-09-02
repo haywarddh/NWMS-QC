@@ -1,5 +1,25 @@
 # Changelog — qc-api
 
+## 0.26.0 — 2026-09-02
+
+**Works orders get their own storage and routes, mirroring plans exactly.**
+`GET /api/work-orders` (index passthrough), `GET/PUT/DELETE
+/api/work-orders/{id}` (raw-body-in, raw-body-out, same as plans) — new
+`data\work-orders\<id>.json` per record plus `data\work-orders\index.json`
+(`WorkOrderMeta[]`, newest first), maintained by a `Read-/Save-/Update-/
+Remove-WorkOrderIndex` quartet copied field-for-field from the plan index
+one, `@(...)`-array-wrap guard included. No `all` route — nothing needs a
+dashboard roll-up of every work order's full body the way plans' capability
+dashboard does.
+
+Unlike station rows, this is **not** a privileged write: a work order's own
+"locked → open" reopen travels through the same unauthenticated `PUT` every
+other save on this record uses. The password check for that action lives
+entirely client-side (`PrivilegedGate`, reused as-is), the same shape as
+plan un-archiving already has — the risk profile is different from the
+station-FMEA standard, since a reopened work order only affects its own
+one record's history, not every future plan.
+
 ## 0.23.0 — 2026-09-02
 
 **Station rows are now the service's first genuinely privileged write** —

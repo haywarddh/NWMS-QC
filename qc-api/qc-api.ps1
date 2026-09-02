@@ -49,12 +49,18 @@
    GET    /api/scans/{id}        -> the JSON bytes, Content-Type application/json,
                                     or 404 {"error":"not found"}
    DELETE /api/scans/{id}        -> 200 {"ok":true}  (idempotent)
+   GET    /api/work-orders       -> WorkOrderMeta[]   (newest updatedAt first)
+   GET    /api/work-orders/{id}  -> WorkOrderRecord   | 404 {"error":"not found"}
+   PUT    /api/work-orders/{id}  -> body: full WorkOrderRecord JSON; 200 {"ok":true}
+   DELETE /api/work-orders/{id}  -> 200 {"ok":true}  (idempotent)
  All responses are JSON, UTF-8, application/json -- with TWO exceptions:
  GET /api/attachments/{id} answers with raw image bytes, and GET /api/scans/{id}
  answers with raw JSON bytes this service never parses. Errors are always
  JSON: {"error":"..."}.
  PlanMeta / PlanRecord shapes are defined by the TypeScript source of truth:
    qc\src\lib\plan-repository.ts  and  qc\src\lib\plan-store.tsx
+ WorkOrderMeta / WorkOrderRecord shapes likewise:
+   qc\src\lib\work-order-repository.ts  and  qc\src\lib\work-order-store.tsx
 
  PRIVILEGED ACTIONS (one shared password, checked server-side)
  ------------------------------------------------------------
@@ -170,6 +176,13 @@
                      "nwms-quality", with a warning on the console. Only the
                      SHA-256 hash is ever stored -- to change the password,
                      drop a new hash in (see README) and restart.
+   work-orders\<id>.json   one full WorkOrderRecord per file, raw request body
+                     byte-for-byte -- same reasoning and same never-round-trip
+                     rule as plans\<id>.json. A work order references an
+                     issued plan by id (planId) and carries its OWN evidence;
+                     it never touches the plan's own file.
+   work-orders\index.json WorkOrderMeta[] (newest updatedAt first), maintained
+                     the same way plans\index.json is.
    qc-api.lock       the service lock (see MAINTENANCE NOTES below). Held open
                      with FileShare::None for the whole life of the process and
                      deleted on a clean stop. It lives in the DATA folder, not
@@ -264,7 +277,7 @@ $ErrorActionPreference = 'Stop'
 # Service identity
 # ------------------------------------------------------------------------------
 $ServiceName    = 'qc-api'
-$ServiceVersion = '0.25.0'   # surfaced in /api/health and the startup banner
+$ServiceVersion = '0.26.0'   # surfaced in /api/health and the startup banner
 
 # Tag stamped on the front of EVERY console line the request loop writes, built
 # once here rather than per request. An unlabelled ad-hoc run gets no tag at all,
@@ -300,6 +313,8 @@ $StationFmeaPath = Join-Path $DataDir 'station-fmea.json'
 $SettingsPath   = Join-Path $DataDir 'settings.json'
 $AttachmentsDir = Join-Path $DataDir 'attachments'
 $ScansDir       = Join-Path $DataDir 'scans'
+$WorkOrdersDir  = Join-Path $DataDir 'work-orders'
+$WorkOrderIndexPath = Join-Path $WorkOrdersDir 'index.json'
 
 # The service lock. Deliberately inside the DATA folder: the thing being
 # protected is this data, so "one holder per data folder" is precisely the rule,
@@ -312,6 +327,7 @@ $null = New-Item -ItemType Directory -Force -Path $DataDir
 $null = New-Item -ItemType Directory -Force -Path $PlansDir
 $null = New-Item -ItemType Directory -Force -Path $AttachmentsDir
 $null = New-Item -ItemType Directory -Force -Path $ScansDir
+$null = New-Item -ItemType Directory -Force -Path $WorkOrdersDir
 
 # UTF-8 encoder WITHOUT a BOM. [System.Text.Encoding]::UTF8 writes a BOM via
 # WriteAllText, which would corrupt JSON parsing in the browser -- always use
@@ -359,6 +375,13 @@ $PlanMetaFields = @(
     'decidedAt', 'decidedBy', 'approvalNotes',
     'archivedFrom', 'unarchivedAt', 'unarchivedBy', 'unarchivedFrom',
     'pmpCount', 'evidenceCount'
+)
+
+# Same role as $PlanMetaFields, for the (much smaller) WorkOrderMeta shape.
+$WorkOrderMetaFields = @(
+    'id', 'planId', 'worksOrderNumber', 'status', 'createdAt', 'updatedAt',
+    'lockedAt', 'reopenedAt', 'reopenedBy',
+    'planTitle', 'partNumber', 'customer', 'drawingRef', 'evidenceCount'
 )
 
 # ==============================================================================
@@ -569,6 +592,13 @@ function Get-Sha256Hex {
 # percent tricks) is rejected before it can touch the filesystem -- this is
 # the path-traversal guard for plans\<id>.json.
 function Test-PlanId {
+    param([string]$Id)
+    return ($Id -match '^[A-Za-z0-9-]+$')
+}
+
+# Same rule, same reason, for work-orders\<id>.json -- work order ids come
+# from the same newId() helper in the front end.
+function Test-WorkOrderId {
     param([string]$Id)
     return ($Id -match '^[A-Za-z0-9-]+$')
 }
@@ -808,6 +838,84 @@ function Remove-PlanFromIndex {
 }
 
 # ==============================================================================
+# Work order index maintenance -- same shape and same reasoning as the plan
+# index quartet above, over work-orders\index.json instead.
+# ==============================================================================
+
+function Read-WorkOrderIndex {
+    if (-not (Test-Path -LiteralPath $WorkOrderIndexPath)) { return @() }
+    try {
+        $raw = [System.IO.File]::ReadAllText($WorkOrderIndexPath)
+        # Same PSObject-wrapped-array trap as Read-PlanIndex -- foreach unwraps
+        # it correctly, @(...) alone does not. See Read-PlanIndex's own comment.
+        $parsed = ConvertFrom-Json -InputObject $raw
+        $entries = [System.Collections.Generic.List[object]]::new()
+        foreach ($item in $parsed) { $entries.Add($item) }
+        return $entries.ToArray()
+    }
+    catch {
+        Write-Host ('WARNING: could not parse ' + $WorkOrderIndexPath + ' - treating index as empty. ' + $_.Exception.Message)
+        return @()
+    }
+}
+
+function Save-WorkOrderIndex {
+    param($Entries)
+    $list = @($Entries)
+    if ($list.Count -eq 0) {
+        $json = '[]'
+    }
+    else {
+        # Same single-element-collapse guard as Save-PlanIndex.
+        $json = ConvertTo-Json -InputObject @($list) -Depth 6
+    }
+    Write-FileAtomic -Path $WorkOrderIndexPath -Content $json
+}
+
+function Build-WorkOrderMetaEntry {
+    param($Meta)
+    $entry = [ordered]@{}
+    foreach ($field in $WorkOrderMetaFields) {
+        $property = $Meta.PSObject.Properties[$field]
+        if ($null -ne $property) {
+            $entry[$field] = $property.Value
+        }
+    }
+    return $entry
+}
+
+function Update-WorkOrderIndex {
+    param($Meta)
+    $entry    = Build-WorkOrderMetaEntry -Meta $Meta
+    $existing = @(Read-WorkOrderIndex)
+
+    $rebuilt = [System.Collections.Generic.List[object]]::new()
+    $rebuilt.Add($entry)
+    foreach ($old in $existing) {
+        if ([string]$old.id -ne [string]$entry['id']) {
+            $rebuilt.Add($old)
+        }
+    }
+
+    $sorted = @($rebuilt | Sort-Object -Property @{ Expression = { [string]$_.updatedAt } } -Descending)
+    Save-WorkOrderIndex -Entries $sorted
+}
+
+function Remove-WorkOrderFromIndex {
+    param([string]$Id)
+    $existing = @(Read-WorkOrderIndex)
+    $kept = [System.Collections.Generic.List[object]]::new()
+    foreach ($old in $existing) {
+        if ([string]$old.id -ne $Id) {
+            $kept.Add($old)
+        }
+    }
+    if ($kept.Count -ne $existing.Count) {
+        Save-WorkOrderIndex -Entries $kept
+    }
+}
+
+# ==============================================================================
 # Settings (data\settings.json -- the privileged password hash)
 # ==============================================================================
 # settings.json is a single flat OBJECT, not an array, so the PS 5.1
@@ -985,6 +1093,93 @@ function Invoke-PlanDelete {
         Remove-Item -LiteralPath $planPath -Force
     }
     Remove-PlanFromIndex -Id $Id
+    return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":true}')
+}
+
+# ==============================================================================
+# Work order handlers -- same shape as the plan handlers above (full CRUD,
+# index-backed list), not the attachments/scans shape (write-once blob, no
+# list, no update). A work order references an issued plan by id but is its
+# own file; nothing here ever touches plans\<id>.json.
+# ==============================================================================
+
+# GET /api/work-orders -- same "index file IS the response" shortcut as
+# Invoke-PlanListGet.
+function Invoke-WorkOrderListGet {
+    param($Context)
+    if (Test-Path -LiteralPath $WorkOrderIndexPath) {
+        $json = [System.IO.File]::ReadAllText($WorkOrderIndexPath)
+    }
+    else {
+        $json = '[]'
+    }
+    return (Send-Json -Context $Context -StatusCode 200 -Json $json)
+}
+
+# GET /api/work-orders/{id} -- serve the stored record byte-for-byte.
+function Invoke-WorkOrderGet {
+    param($Context, [string]$Id)
+    $woPath = Join-Path $WorkOrdersDir ($Id + '.json')
+    if (-not (Test-Path -LiteralPath $woPath)) {
+        return (Send-Json -Context $Context -StatusCode 404 -Json (New-ErrorBody 'not found'))
+    }
+    $json = [System.IO.File]::ReadAllText($woPath)
+    return (Send-Json -Context $Context -StatusCode 200 -Json $json)
+}
+
+# PUT /api/work-orders/{id} -- store the raw body, then refresh the index
+# from record.meta. Same "parse only to reach meta" rule as Invoke-PlanPut.
+function Invoke-WorkOrderPut {
+    param($Context, [string]$Id)
+    $request = $Context.Request
+
+    if ($request.ContentLength64 -gt $MaxBodyBytes) {
+        return (Send-Json -Context $Context -StatusCode 413 -Json (New-ErrorBody 'request body too large'))
+    }
+
+    $body = Read-RequestBody -Context $Context
+    if ([string]::IsNullOrWhiteSpace($body)) {
+        return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'empty request body'))
+    }
+
+    $record = $null
+    try {
+        $record = ConvertFrom-Json -InputObject $body
+    }
+    catch {
+        return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'request body is not valid JSON'))
+    }
+
+    # A WorkOrderRecord is { meta: {...}, state: {...} }. Same minimal
+    # validation as Invoke-PlanPut: meta must exist and meta.id must match
+    # the URL.
+    $metaProperty = $null
+    if ($null -ne $record) { $metaProperty = $record.PSObject.Properties['meta'] }
+    if ($null -eq $metaProperty -or $null -eq $metaProperty.Value) {
+        return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'record has no meta object'))
+    }
+    $meta = $metaProperty.Value
+
+    $idProperty = $meta.PSObject.Properties['id']
+    if ($null -eq $idProperty -or ([string]$idProperty.Value) -ne $Id) {
+        return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'meta.id does not match the URL id'))
+    }
+
+    $woPath = Join-Path $WorkOrdersDir ($Id + '.json')
+    Write-FileAtomic -Path $woPath -Content $body
+    Update-WorkOrderIndex -Meta $meta
+
+    return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":true}')
+}
+
+# DELETE /api/work-orders/{id} -- idempotent, same as Invoke-PlanDelete.
+function Invoke-WorkOrderDelete {
+    param($Context, [string]$Id)
+    $woPath = Join-Path $WorkOrdersDir ($Id + '.json')
+    if (Test-Path -LiteralPath $woPath) {
+        Remove-Item -LiteralPath $woPath -Force
+    }
+    Remove-WorkOrderFromIndex -Id $Id
     return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":true}')
 }
 
@@ -1652,6 +1847,24 @@ function Invoke-Request {
         }
         if ($routeMethod -eq 'GET')    { return (Invoke-ScanGet    -Context $Context -Id $scanId) }
         if ($routeMethod -eq 'DELETE') { return (Invoke-ScanDelete -Context $Context -Id $scanId) }
+        return (Send-MethodNotAllowed -Context $Context)
+    }
+
+    # Work orders. Same shape and same ordering rule as the plans block above
+    # -- the exact /api/work-orders collection route before the /{id} regex.
+    if ($path -eq '/api/work-orders') {
+        if ($routeMethod -eq 'GET') { return (Invoke-WorkOrderListGet -Context $Context) }
+        return (Send-MethodNotAllowed -Context $Context)
+    }
+
+    if ($path -match '^/api/work-orders/([^/]+)$') {
+        $workOrderId = $Matches[1]
+        if (-not (Test-WorkOrderId -Id $workOrderId)) {
+            return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'invalid work order id'))
+        }
+        if ($routeMethod -eq 'GET')    { return (Invoke-WorkOrderGet    -Context $Context -Id $workOrderId) }
+        if ($routeMethod -eq 'PUT')    { return (Invoke-WorkOrderPut    -Context $Context -Id $workOrderId) }
+        if ($routeMethod -eq 'DELETE') { return (Invoke-WorkOrderDelete -Context $Context -Id $workOrderId) }
         return (Send-MethodNotAllowed -Context $Context)
     }
 

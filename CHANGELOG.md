@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.25.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.26.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,35 @@ the project-level record.
 ---
 
 ## History
+
+### 0.26.0 — 2026-09-02
+
+**Works Orders: repeatable production evidence against an issued plan.** A
+plan is approved once — set, submitted with its first-article evidence,
+issued — and that's always been the end of the story: the only way through
+the lock was `amendPlan`, meant for when the standard itself changes. Real
+production doesn't stop at first article; the same approved standard governs
+every later run, and each one needs its own fresh capability/conformity
+proof, tied to a real works order number that also appears in Kanban SPC and
+InspecVision scan exports.
+
+A Works Order is a new, independent record — its own page under **Works
+orders**, its own provider/repository, its own tiny `open`/`locked`
+lifecycle. It references an issued plan by id and holds only its own fresh
+evidence (readings, CSV imports, manual checks, InspecVision scans,
+photographs) against that plan's existing characteristics; the plan itself,
+and its own original evidence, are never touched. Start one from an issued
+plan's Customer approval page.
+
+Finishing a run means generating its own **Capability / Conformity
+Report** — a new, leaner document distinct from the ISIR: results,
+capability and photographic evidence for that one run, without repeating
+the process risk, drawing notes or sign-off sections the ISIR already
+covers once. Generating it is a separate, explicit action from printing —
+"Finalize & lock this works order" — after which the record locks the same
+way an issued plan does. It can be reopened with the shared privileged
+password (the same `PrivilegedGate` already used to un-archive a plan), so
+end users can't casually go back and edit genuine results.
 
 ### 0.25.0 — 2026-09-02
 
