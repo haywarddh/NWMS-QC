@@ -1,5 +1,30 @@
 # Changelog — qc-api
 
+## 0.23.0 — 2026-09-02
+
+**Station rows are now the service's first genuinely privileged write** —
+every other `PrivilegedGate` in the front end only ever gated the browser's
+own UI before an otherwise-unauthenticated save; this is the first time the
+password is checked on the mutating request itself.
+
+- New `PUT /api/library/station-fmea`, body `{"stationFmea":[...],
+  "removedStationFmea":[...],"password":"..."}`. The password is hashed and
+  compared against `data\settings.json`'s stored hash the same way `POST
+  /api/privileged/verify` already does; a wrong password is `200
+  {"ok":false}`, not 401/403, for the identical reason that endpoint gives —
+  an expected answer, not a transport failure. The plaintext password never
+  touches disk: only `stationFmea`/`removedStationFmea` are written out.
+- Station rows move to their own file, `data\station-fmea.json`, split out
+  of `data\library.json` so they can be gated independently of the three
+  collections `PUT /api/library` still writes unprivileged. `GET
+  /api/library` merges the two files back into the one response the front
+  end has always expected — no shape change on that side.
+- The very first request after upgrading pulls any station rows already
+  sitting in the old combined `library.json` into the new file
+  automatically (`Initialize-StationFmeaFile`, called lazily from `GET
+  /api/library`) — nothing operator-facing to run, and nothing already
+  saved goes missing.
+
 ## 0.10.0 — 2026-08-18
 
 Version bump only -- nothing in this file changed. Both fixes (the Nominal/

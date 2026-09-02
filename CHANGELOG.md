@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.22.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.23.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,46 @@ the project-level record.
 ---
 
 ## History
+
+### 0.23.0 — 2026-09-02
+
+**The FMEA knowledge base is now two genuinely different libraries, not one
+idea hand-typed twice.** Station rows are the constant, company-wide
+standard every new plan starts from — now privileged, only editable from
+the Knowledge Base, by whoever has the password. Failure lines are for
+whatever's specific to the record open — a one-off risk on an unusual
+part — and stay open to anyone, same as before.
+
+- **Station rows are now privileged**, the first genuinely server-enforced
+  password check in this app: the QC API itself refuses the write, not just
+  the browser's own UI. Split into their own storage
+  (`data\station-fmea.json`) and their own endpoint (`PUT
+  /api/library/station-fmea`), so they can be gated independently of the
+  three collections that still aren't. Existing station rows already saved
+  are carried across automatically the first time the service starts with
+  this version — nothing to do by hand.
+- Editing a station row now happens locally and stays local until an
+  explicit **Save changes to the standard** click — a keystroke-driven
+  autosave has nowhere to carry a password a gated write now needs, and
+  this matches the same "no silent writes" rule the rest of this release
+  applies everywhere else.
+- **"Save as Failure line"** and **"Promote to a Station Row"** replace the
+  old single "Save to knowledge base" button, both on the FMEA page's row
+  editor and the PMP panel's one-off editor. Saving as a Failure line tags
+  the entry with the record it came from, so it can be recognised as
+  specific-to-a-job when someone browses the library later. Promoting
+  never writes the shared standard directly — it stages a draft and hands
+  the person to the Knowledge Base to actually finish and save it, same
+  place every other station-row edit happens. A row seeded from a station
+  row remembers where it came from, so promoting it defaults to *updating*
+  that same entry instead of creating a near-duplicate.
+- The 17 real failure chains behind Failure lines' starter set are no
+  longer hand-duplicated in a second file — they're derived from the same
+  station data Station Rows already used, so a correction made in one
+  place is never stranded in the other again.
+- A PMP itself still never belongs to either library, only the failure
+  analysis underneath it does — unchanged, just made explicit: a PMP is
+  always specific to the drawing it sits on.
 
 ### 0.22.0 — 2026-08-20
 

@@ -29,8 +29,14 @@
    GET    /api/plans/{id}   -> PlanRecord   | 404 {"error":"not found"}
    PUT    /api/plans/{id}   -> body: full PlanRecord JSON; 200 {"ok":true}
    DELETE /api/plans/{id}   -> 200 {"ok":true}  (idempotent)
-   GET    /api/library      -> {"templates":[...],"removedSeeds":[...]}
-   PUT    /api/library      -> body same shape; 200 {"ok":true}
+   GET    /api/library      -> {"templates":[...],"removedSeeds":[...],"stationFmea":[...],...}
+   PUT    /api/library      -> body: the UNPRIVILEGED collections only (templates,
+                                removedSeeds, routeTemplates, stationCodes, ...);
+                                200 {"ok":true}
+   PUT    /api/library/station-fmea -> body {"stationFmea":[...],"removedStationFmea":[...],
+                                "password":"..."}; 200 {"ok":true|false} -- the one
+                                PRIVILEGED library write, password checked server-side
+                                the same way POST /api/privileged/verify checks one
    GET    /api/privileged        -> {"configured":true|false}
    POST   /api/privileged/verify -> body {"password":"..."}; 200 {"ok":true|false}
    POST   /api/attachments       -> body: RAW image bytes, type from Content-Type;
@@ -152,7 +158,13 @@
                      always application/json, so unlike attachments there is
                      only one possible extension. One live reference per PMP
                      (Pmp.inspecVisionScan.blobId) -- see SCAN DATA above.
-   library.json      raw body of the last PUT /api/library.
+   library.json      raw body of the last PUT /api/library (the three
+                     UNPRIVILEGED collections only -- see station-fmea.json).
+   station-fmea.json {"stationFmea":[...],"removedStationFmea":[...]}, the one
+                     PRIVILEGED collection, written only by PUT
+                     /api/library/station-fmea once the password checks out.
+                     Split from library.json so it can be gated independently;
+                     GET /api/library merges the two back into one response.
    settings.json     {"privilegedPasswordHash":"<hex sha256>","updatedAt":"..."}
                      Created on first run from the default password
                      "nwms-quality", with a warning on the console. Only the
@@ -252,7 +264,7 @@ $ErrorActionPreference = 'Stop'
 # Service identity
 # ------------------------------------------------------------------------------
 $ServiceName    = 'qc-api'
-$ServiceVersion = '0.22.0'   # surfaced in /api/health and the startup banner
+$ServiceVersion = '0.23.0'   # surfaced in /api/health and the startup banner
 
 # Tag stamped on the front of EVERY console line the request loop writes, built
 # once here rather than per request. An unlabelled ad-hoc run gets no tag at all,
@@ -282,6 +294,9 @@ $DataDir = [System.IO.Path]::GetFullPath($DataDir)
 $PlansDir       = Join-Path $DataDir 'plans'
 $IndexPath      = Join-Path $PlansDir 'index.json'
 $LibraryPath    = Join-Path $DataDir 'library.json'
+# Station rows split out of library.json on their own so they can be gated
+# independently -- see PUT /api/library/station-fmea and Invoke-LibraryGet.
+$StationFmeaPath = Join-Path $DataDir 'station-fmea.json'
 $SettingsPath   = Join-Path $DataDir 'settings.json'
 $AttachmentsDir = Join-Path $DataDir 'attachments'
 $ScansDir       = Join-Path $DataDir 'scans'
@@ -973,16 +988,105 @@ function Invoke-PlanDelete {
     return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":true}')
 }
 
-# GET /api/library -- raw stored body, or the empty shape before first save.
+# True when `$Obj` (a parsed library.json body) still carries the two keys
+# that now belong exclusively to station-fmea.json -- removes them IN PLACE
+# when found. Shared by Initialize-StationFmeaFile (cleaning up a legacy
+# pre-split file) and Invoke-LibraryPut (defending against a client that
+# still sends them) so library.json can never end up holding the same key
+# GET already serves from the split file, which would otherwise make the
+# merged response in Invoke-LibraryGet carry that key twice.
+function Remove-StationFmeaKeys {
+    param($Obj)
+    $found = $false
+    if ($null -ne $Obj.PSObject.Properties['stationFmea']) {
+        $Obj.PSObject.Properties.Remove('stationFmea')
+        $found = $true
+    }
+    if ($null -ne $Obj.PSObject.Properties['removedStationFmea']) {
+        $Obj.PSObject.Properties.Remove('removedStationFmea')
+        $found = $true
+    }
+    return $found
+}
+
+# Re-serialises a parsed library.json body, explicitly wrapping every
+# collection field with @(...) first -- ConvertTo-Json silently collapses a
+# one-element PowerShell array back to a bare scalar otherwise (the same
+# PS 5.1 array-shape trap the front end's own PowerShell code has hit
+# before). Only used on the rare path that needs to rewrite library.json at
+# all -- the normal raw-string passthrough every other write uses is
+# unaffected and stays exactly as fast as before.
+function ConvertTo-LibraryJson {
+    param($Obj)
+    $clean = @{
+        templates    = @($Obj.templates)
+        removedSeeds = @($Obj.removedSeeds)
+    }
+    foreach ($key in 'routeTemplates', 'removedRouteTemplates', 'stationCodes', 'removedStationCodes') {
+        if ($null -ne $Obj.PSObject.Properties[$key]) { $clean[$key] = @($Obj.$key) }
+    }
+    return (ConvertTo-Json -InputObject $clean -Depth 10)
+}
+
+# The first time this runs after station rows were split into their own
+# file, they still only exist inside an already-deployed library.json --
+# rather than a fresh station-fmea.json silently reading as empty and losing
+# every station row already saved, pull them out of library.json ONCE, write
+# the new file, and clean the keys out of library.json so they never sit in
+# both places at once. A real parse (not the usual raw-string passthrough
+# every other library/plan write uses) is fine here specifically: neither
+# file carries anything resembling a drawing data URL, so PS 5.1's
+# depth/type quirks on ConvertTo-Json are not the risk they are for a plan
+# body (see DATA LAYOUT above) -- they still need the @(...) array guards
+# above, just not the "never round-trip it" rule itself. Idempotent -- the
+# Test-Path guard makes every call after the first a no-op.
+function Initialize-StationFmeaFile {
+    if (Test-Path -LiteralPath $StationFmeaPath) { return }
+    $stationFmea = @()
+    $removedStationFmea = @()
+    if (Test-Path -LiteralPath $LibraryPath) {
+        try {
+            $old = ConvertFrom-Json -InputObject ([System.IO.File]::ReadAllText($LibraryPath))
+            if ($null -ne $old.PSObject.Properties['stationFmea']) { $stationFmea = @($old.stationFmea) }
+            if ($null -ne $old.PSObject.Properties['removedStationFmea']) {
+                $removedStationFmea = @($old.removedStationFmea)
+            }
+            if (Remove-StationFmeaKeys -Obj $old) {
+                Write-FileAtomic -Path $LibraryPath -Content (ConvertTo-LibraryJson -Obj $old)
+            }
+        }
+        catch {
+            Write-Host ('WARNING: could not read station rows out of ' + $LibraryPath + ' while splitting them into ' + $StationFmeaPath + ' - starting empty. ' + $_.Exception.Message)
+        }
+    }
+    $payload = @{ stationFmea = @($stationFmea); removedStationFmea = @($removedStationFmea) }
+    Write-FileAtomic -Path $StationFmeaPath -Content (ConvertTo-Json -InputObject $payload -Depth 10)
+}
+
+# GET /api/library -- the three unprivileged collections' raw stored body,
+# spliced with station-fmea.json's own. A textual splice (trim each stored
+# object's outer braces, join with a comma) rather than a parse-and-merge,
+# same "avoid round-tripping through ConvertFrom-Json/ConvertTo-Json" reason
+# as plan bodies: both files are already validated JSON objects by the time
+# they reach disk, so there is nothing to gain from parsing them again just
+# to glue two objects together. Safe to splice blindly -- library.json is
+# guaranteed never to carry stationFmea/removedStationFmea itself, by
+# Initialize-StationFmeaFile above and Invoke-LibraryPut below, so there is
+# no duplicate key to worry about resolving.
 function Invoke-LibraryGet {
     param($Context)
+    Initialize-StationFmeaFile
     if (Test-Path -LiteralPath $LibraryPath) {
-        $json = [System.IO.File]::ReadAllText($LibraryPath)
+        $libraryJson = [System.IO.File]::ReadAllText($LibraryPath).Trim()
     }
     else {
-        $json = '{"templates":[],"removedSeeds":[]}'
+        $libraryJson = '{"templates":[],"removedSeeds":[]}'
     }
-    return (Send-Json -Context $Context -StatusCode 200 -Json $json)
+    $stationJson = [System.IO.File]::ReadAllText($StationFmeaPath).Trim()
+    $libraryInner = $libraryJson.Substring(1, $libraryJson.Length - 2)
+    $stationInner = $stationJson.Substring(1, $stationJson.Length - 2)
+    $merged = '{' + $libraryInner + ',' + $stationInner + '}'
+    return (Send-Json -Context $Context -StatusCode 200 -Json $merged)
 }
 
 # PUT /api/library -- validate the shape lightly, then store the raw body.
@@ -1018,7 +1122,88 @@ function Invoke-LibraryPut {
         return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'body must be {"templates":[...],"removedSeeds":[...]}'))
     }
 
+    # Station rows belong exclusively in station-fmea.json now (see PUT
+    # /api/library/station-fmea) -- the front end no longer sends them here,
+    # but if some other caller still does, strip them before storing rather
+    # than let them reappear and duplicate the key GET already serves from
+    # the split file. The common case (no such keys) is untouched: same raw
+    # $body passthrough as always, no parse cost paid for nothing.
+    if (Remove-StationFmeaKeys -Obj $parsed) {
+        Write-FileAtomic -Path $LibraryPath -Content (ConvertTo-LibraryJson -Obj $parsed)
+        return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":true}')
+    }
+
     Write-FileAtomic -Path $LibraryPath -Content $body
+    return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":true}')
+}
+
+# PUT /api/library/station-fmea -- the one PRIVILEGED library write. Body
+# {"stationFmea":[...],"removedStationFmea":[...],"password":"..."}, checked
+# server-side the same way POST /api/privileged/verify checks one: a wrong
+# password is 200 {"ok":false}, deliberately not 401/403, for the identical
+# reason given there -- it is an expected answer, not a transport failure,
+# and the front end's shared request() helper throws generically on any
+# non-2xx, which would make a real 401 indistinguishable from the service
+# being down. 4xx is reserved for a genuinely malformed request.
+function Invoke-StationFmeaPut {
+    param($Context)
+    $request = $Context.Request
+
+    if ($request.ContentLength64 -gt $MaxBodyBytes) {
+        return (Send-Json -Context $Context -StatusCode 413 -Json (New-ErrorBody 'request body too large'))
+    }
+
+    $body = Read-RequestBody -Context $Context
+    if ([string]::IsNullOrWhiteSpace($body)) {
+        return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'empty request body'))
+    }
+
+    $parsed = $null
+    try {
+        $parsed = ConvertFrom-Json -InputObject $body
+    }
+    catch {
+        return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'request body is not valid JSON'))
+    }
+
+    $stationProperty = $null
+    $removedProperty = $null
+    $passwordProperty = $null
+    if ($null -ne $parsed) {
+        $stationProperty  = $parsed.PSObject.Properties['stationFmea']
+        $removedProperty  = $parsed.PSObject.Properties['removedStationFmea']
+        $passwordProperty = $parsed.PSObject.Properties['password']
+    }
+    if ($null -eq $stationProperty -or $null -eq $removedProperty) {
+        return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'body must be {"stationFmea":[...],"removedStationFmea":[...],"password":"..."}'))
+    }
+    if ($null -eq $passwordProperty -or $null -eq $passwordProperty.Value) {
+        return (Send-Json -Context $Context -StatusCode 400 -Json (New-ErrorBody 'body must include "password"'))
+    }
+
+    # Same trim-only rule as /api/privileged/verify -- a stray trailing
+    # newline is transport noise, not part of the password.
+    $supplied = ([string]$passwordProperty.Value).TrimEnd([char]13, [char]10)
+    $storedHash = Get-PrivilegedPasswordHash
+    if ([string]::IsNullOrWhiteSpace($storedHash)) {
+        return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":false}')
+    }
+    $suppliedHash = Get-Sha256Hex -Text $supplied
+    if (-not [string]::Equals($suppliedHash, $storedHash, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":false}')
+    }
+
+    # Password checked -- store only the two collection fields. The raw body
+    # also carries the plaintext password; that must never reach disk, so
+    # this is deliberately NOT a Write-FileAtomic of $body like every other
+    # library write. Station-fmea data is a short list of rows with no
+    # drawing blobs in it, so ConvertTo-Json here carries none of the PS 5.1
+    # deep/large-JSON risk the DATA LAYOUT note above warns plan bodies of.
+    $payload = @{
+        stationFmea        = $parsed.stationFmea
+        removedStationFmea = $parsed.removedStationFmea
+    }
+    Write-FileAtomic -Path $StationFmeaPath -Content (ConvertTo-Json -InputObject $payload -Depth 10)
     return (Send-Json -Context $Context -StatusCode 200 -Json '{"ok":true}')
 }
 
@@ -1408,6 +1593,13 @@ function Invoke-Request {
     if ($path -eq '/api/library') {
         if ($routeMethod -eq 'GET') { return (Invoke-LibraryGet -Context $Context) }
         if ($routeMethod -eq 'PUT') { return (Invoke-LibraryPut -Context $Context) }
+        return (Send-MethodNotAllowed -Context $Context)
+    }
+
+    # Exact match, so ordering relative to /api/library above is free -- same
+    # reasoning as the two privileged routes below.
+    if ($path -eq '/api/library/station-fmea') {
+        if ($routeMethod -eq 'PUT') { return (Invoke-StationFmeaPut -Context $Context) }
         return (Send-MethodNotAllowed -Context $Context)
     }
 
