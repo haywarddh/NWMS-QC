@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.23.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.24.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,14 @@ the project-level record.
 ---
 
 ## History
+
+### 0.24.0 — 2026-09-02
+
+**Failure lines are now scoped to the record they were captured on**, found within a day of publishing 0.23.0: opening the Library with nothing loaded showed every job's one-off captured lines, which reads as clutter and undermines "these belong to a specific record." Only the original 17 starter lines — nobody's specific job — always show; anything captured from a record now shows only while that record is open.
+
+- **"Show all failure lines"** — off by default, ticking it restores the full cross-job list, so the reuse value ("did someone deal with this before, on a different job?") isn't lost, just opt-in rather than always-on.
+- The existing wording search now doubles as that lookup: with "Show all" ticked, it searches every job's captured lines, not just the open record's own.
+- Each line now carries a part-number badge (or "standard" for the starter set) alongside the fuller "captured from X" detail, so which ISIR/part a line came from is visible at a glance, not just on hover.
 
 ### 0.23.0 — 2026-09-02
 
