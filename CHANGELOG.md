@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.24.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.25.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,12 @@ the project-level record.
 ---
 
 ## History
+
+### 0.25.0 — 2026-09-02
+
+**Failure lines no longer have a seeded starter set.** The 17 standard entries were a redundant second copy of the same content Station Rows already carries as the real, privileged standard — pointed out immediately after 0.24.0 shipped: "these should not exist at all since they will be in the station rows." Failure lines now starts empty; every line either gets typed by hand or captured from a specific record's own risk analysis. Already-provisioned Dev/Live data self-heals on next load — no manual data fix needed, and no local browser copy is left stranded with the old 17 either.
+
+**Route templates gained a one-click "Reset to original template"**, alongside the existing "choose a different template" flow — reverts the route back to whichever template this plan actually started from (tracked per-plan already), rather than needing to re-find and re-pick the same one from a growing library of product/quantity-specific templates. Confirmed before it happens what's kept and what's dropped: steps whose codes still match keep their FMEA and PMP links (nothing unique was ever created for them), but any hand-edited wording on them reverts to the template's own, and steps added or no longer in the template — along with anything attached only to them — are dropped rather than silently kept half-consistent.
 
 ### 0.24.0 — 2026-09-02
 
