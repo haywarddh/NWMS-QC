@@ -55,6 +55,30 @@ the project-level record.
 
 ## History
 
+### 0.27.3 — 2026-09-03
+
+**The popped-out drawing window could show stale annotations after sitting
+in the background.** Investigated a report of ghost PMP boxes appearing in
+the popout after deleting every PMP, and of a PMP's box visibly shrinking
+and moving as the annotation-size stepper was clicked. Extensive testing —
+including against an exact, byte-for-byte copy of the real record pulled
+from Dev — never reproduced either as a genuine data change: the stored
+PMP positions and sizes never moved, no matter how the size stepper or
+delete button were driven. Confirmed instead once the affected record was
+retired for a fresh one that the problem was tied to that specific
+long-lived browser session, not the app's handling of any record's data.
+
+The most likely mechanism: a browser throttles a backgrounded tab's timers
+and message handling, so a popout window left behind other windows for a
+stretch could be sitting on a delayed queue of sync messages, showing
+something out of date until the queue caught up. The popout now asks the
+main window for a fresh full sync the moment it becomes visible or gains
+focus again, rather than trusting a throttled queue to catch up on its own
+— self-healing at exactly the point someone is about to look at it. Not a
+confirmed fix for a bug that was never actually reproduced live, but a
+real, low-risk hardening of a genuine gap in how a backgrounded popout
+recovers.
+
 ### 0.27.2 — 2026-09-03
 
 **A PMP's custom colour could jump to the wrong PMP.** Reported as "the

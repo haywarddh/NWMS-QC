@@ -1,5 +1,10 @@
 # Changelog — qc-api
 
+## 0.27.3 — 2026-09-03
+
+Version bump only -- nothing in this file changed. The popout
+resync-on-focus hardening is entirely front-end; see the root CHANGELOG.md.
+
 ## 0.27.2 — 2026-09-03
 
 Version bump only -- nothing in this file changed. The colour-picker
