@@ -55,6 +55,32 @@ the project-level record.
 
 ## History
 
+### 0.27.1 — 2026-09-03
+
+**Two fixes to 0.27.0's annotation styling.** The PDF export's annotation
+size was still keyed to the page's raw *width* — for a scanned image, its
+pixel count treated as points outright; even for a real PDF, a landscape and
+a portrait export of the very same A3 sheet came out two different sizes,
+since width alone doesn't agree with itself across orientations. Replaced
+with `pdfAnnotationStyle()` in `leader-geometry.ts`, calibrated to real
+physical units: a 12pt font, 2pt lines (leader, box border and label border
+together, as one figure), a 2pt arrowhead and a 5pt label radius, at 100% on
+a sheet the physical size of A3 — scaled by page *area*, not width, so
+orientation no longer matters, and scaled by the size stepper as one
+uniform multiplier so every element grows together exactly proportionally.
+The interactive canvas and printed report were untouched — their on-screen
+sizing was already correct and wasn't part of this fix.
+
+Also: a PMP's custom colour was being visually dropped the instant a
+*different* PMP was selected — confirmed the underlying data was always
+saved correctly; every drawn property (box, line, arrowhead, text) already
+read the PMP's own colour regardless of selection except the label chip's
+background fill, still hardcoded to a neutral tint whenever that PMP wasn't
+the selected one, a leftover from before per-PMP colour existed. The chip
+now always tints by the PMP's own colour, with selection shown as a
+stronger tint rather than colour-vs-no-colour — fixed identically on the
+printed report's own label chip, which had the same always-neutral fill.
+
 ### 0.27.0 — 2026-09-03
 
 **Consistent, scalable drawing annotations, plus a per-PMP colour.** A PMP

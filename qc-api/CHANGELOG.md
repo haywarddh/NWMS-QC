@@ -1,5 +1,11 @@
 # Changelog — qc-api
 
+## 0.27.1 — 2026-09-03
+
+Version bump only -- nothing in this file changed. Both fixes (PDF export
+annotation sizing, a colour-fill rendering bug) are entirely front-end; see
+the root CHANGELOG.md.
+
 ## 0.27.0 — 2026-09-03
 
 Version bump only -- nothing in this file changed. The consistent-annotation-
