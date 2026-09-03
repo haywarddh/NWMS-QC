@@ -2,7 +2,7 @@
 
 ## Versioning scheme
 
-Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.26.0"** —
+Semantic Versioning (MAJOR.MINOR.PATCH), shown in the app as **"Beta v0.27.0"** —
 "Beta" is the human-readable flag, and MAJOR staying at 0 is the same signal in
 SemVer terms. Deliberately identical in spirit to the Weekly Delivery Planner's
 scheme, so the two apps are versioned the same way.
@@ -54,6 +54,32 @@ the project-level record.
 ---
 
 ## History
+
+### 0.27.0 — 2026-09-03
+
+**Consistent, scalable drawing annotations, plus a per-PMP colour.** A PMP
+marker (box, leader line, label, arrowhead) was drawn on three separate
+surfaces — the interactive canvas, the printed report's drawing figure, and
+the annotated-PDF export — each hand-tuned with its own numbers: reported as
+"line weighting and radius scale... do not look consistent," and confirmed
+by direct comparison — the canvas never distinguished critical from normal
+on its leader line at all, its label border was keyed to *selection* rather
+than criticality, and the report and PDF export each carried their own,
+mutually inconsistent weights. `leader-geometry.ts`'s new `annotationStyle()`
+is now the one place every line weight, border width, corner radius and
+arrowhead size is derived from — one base scale, one critical/normal ratio
+(a clean 2x, reconciled from the report's own prior numbers) — consumed
+identically by all three surfaces, so they read as one coherent drawn system
+rather than independently-tuned pieces. A new stepper on the Drawing & plan
+page (next to the existing zoom control) adjusts that scale collectively,
+persisted per plan, unaffected by the plan's own lock — it's a display/print
+preference, not part of the standard being measured. PMPs also gain an
+optional custom annotation colour (a plain colour-picker input, the first in
+the app), layered on top of — never replacing — the criticality signal:
+weight and the critical ✳ label suffix (now shown on the canvas too, not
+just the printed report) stay purely criticality-driven regardless of what
+colour is chosen, so "colour is never the only signal" stays true even for
+a custom one.
 
 ### 0.26.0 — 2026-09-02
 

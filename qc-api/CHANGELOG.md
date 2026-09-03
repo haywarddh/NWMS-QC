@@ -1,5 +1,12 @@
 # Changelog — qc-api
 
+## 0.27.0 — 2026-09-03
+
+Version bump only -- nothing in this file changed. The consistent-annotation-
+styling and per-PMP colour work (see the root CHANGELOG.md) is entirely
+front-end: new fields on Pmp/PlanState travel inside the same opaque plan
+JSON blob this service already stores and returns untouched.
+
 ## 0.26.0 — 2026-09-02
 
 **Works orders get their own storage and routes, mirroring plans exactly.**
