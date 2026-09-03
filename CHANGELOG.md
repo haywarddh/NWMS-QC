@@ -55,6 +55,30 @@ the project-level record.
 
 ## History
 
+### 0.27.2 — 2026-09-03
+
+**A PMP's custom colour could jump to the wrong PMP.** Reported as "the
+colours and shapes of the pmp annotations is changing... without any
+input," certainly in the popped-out drawing window. The colour
+`<input type="color">` in the editor panel had no `key`, so React reused
+the same DOM node across a PMP selection change — a native colour dialog
+fires several `input` events while it's being dragged, and if a different
+PMP was selected before the dialog settled, a trailing event from the
+abandoned drag could still land, applying to whichever PMP was *now*
+selected rather than the one actually being edited. Fixed by keying the
+input on the selected PMP's own id, so a stale event from an
+already-abandoned picker has no listener left to reach.
+
+Investigating this also turned up two related, independently real bugs:
+the popped-out window's reconnect handshake never stopped retrying once
+connected, quietly re-requesting a full state sync every 1.5 seconds for
+as long as the window stayed open; and `DrawingCanvas`'s one-time
+auto-fit-zoom could re-fire on a PDF sheet specifically, since `PdfSheet`
+re-reports the page's aspect ratio on every container resize, and
+floating-point drift between two of those reports was enough to look like
+a genuinely new value — silently overriding a zoom level already set by
+hand. Both fixed.
+
 ### 0.27.1 — 2026-09-03
 
 **Two fixes to 0.27.0's annotation styling.** The PDF export's annotation

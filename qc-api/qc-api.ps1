@@ -277,7 +277,7 @@ $ErrorActionPreference = 'Stop'
 # Service identity
 # ------------------------------------------------------------------------------
 $ServiceName    = 'qc-api'
-$ServiceVersion = '0.27.1'   # surfaced in /api/health and the startup banner
+$ServiceVersion = '0.27.2'   # surfaced in /api/health and the startup banner
 
 # Tag stamped on the front of EVERY console line the request loop writes, built
 # once here rather than per request. An unlabelled ad-hoc run gets no tag at all,
