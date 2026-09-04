@@ -55,6 +55,40 @@ the project-level record.
 
 ## History
 
+### 0.29.0 — 2026-09-04
+
+**Annotation sizing is now four settings the user sets directly — font
+size, line weight, arrow size and corner radius — replacing both the
+earlier collective scale multiplier and the PDF export's own page-area
+auto-calibration.**
+
+Two rounds of trying to auto-derive the right size had both been reported
+back as wrong on a real document, most recently with side-by-side evidence:
+a critical PMP's label chip rendering as an illegible solid-colour blob on
+screen, and the exported PDF sitting far too small next to a mockup built
+by hand in Illustrator to show the intended proportions. The likely cause:
+the source drawing is A2, but the PDF it was converted to reports as
+A3-sized — so a formula that infers "how big should this be" from the
+PDF's own page dimensions is reasoning from a false premise for this
+document, and that mismatch cannot be detected from the PDF alone. There is
+no way to out-guess this with a better formula, so sizing is no longer
+guessed: all four values are real point sizes, set once per plan, applied
+identically everywhere (the PDF export draws them as literal points; the
+two on-screen surfaces convert the same numbers into their own viewBox
+units via one fixed, universal ratio — never anything read from the
+uploaded document's own reported page size).
+
+Collapsing box border, label border and leader line into a single "line
+weight" value (previously three independently-derived numbers) also closes
+off a bug that had recurred twice already — the box and the label chip
+quietly ending up different weights, no matter how carefully the formula
+relating them was tuned. They cannot drift apart when there is only one
+number feeding all three.
+
+New settings icon on the drawing canvas (both the main view and the popped-
+out window) opens a small panel with the four values and a reset-to-
+defaults action.
+
 ### 0.28.1 — 2026-09-04
 
 **Two follow-ups to 0.28.0's styling pass, both found by comparing the same

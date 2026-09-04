@@ -1,5 +1,12 @@
 # Changelog — qc-api
 
+## 0.29.0 — 2026-09-04
+
+Version bump only -- nothing in this file changed. The move to manual,
+per-plan annotation sizing (font size/line weight/arrow size/radius,
+replacing the old auto-derived scale) is entirely front-end; see the root
+CHANGELOG.md.
+
 ## 0.28.1 — 2026-09-04
 
 Version bump only -- nothing in this file changed. The label chip border
