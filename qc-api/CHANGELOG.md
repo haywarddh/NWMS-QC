@@ -1,5 +1,11 @@
 # Changelog — qc-api
 
+## 0.29.1 — 2026-09-04
+
+Version bump only -- nothing in this file changed. Dropping the critical
+PMP chip's double border and rebalancing the default arrow size are
+entirely front-end; see the root CHANGELOG.md.
+
 ## 0.29.0 — 2026-09-04
 
 Version bump only -- nothing in this file changed. The move to manual,

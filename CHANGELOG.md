@@ -55,6 +55,24 @@ the project-level record.
 
 ## History
 
+### 0.29.1 — 2026-09-04
+
+**A critical PMP's label chip read visibly heavier than its box and its
+arrow, even though box, chip and leader line all already share one line-
+weight number.** Confirmed by zooming into the actual rendering: the
+chip's border was two concentric lines (added a few rounds back as one
+more "colour is never the only signal" cue for a critical PMP), and two
+lines will always look heavier than the box's one, whatever weight each
+individual line is tuned to. Dropped -- the chip's border is now a single
+line, exactly the box's own weight, in every case. Criticality still reads
+clearly without it: colour, doubled line weight, doubled arrow size and
+the `✳` suffix.
+
+Also rebalanced the default arrow size (was 6pt, a flat number carried over
+from an earlier, unrelated calibration system) to 2x line weight (4pt at
+the 2pt default) -- big enough to read as a real arrowhead, without the
+filled triangle visually outweighing the thin lines it sits among.
+
 ### 0.29.0 — 2026-09-04
 
 **Annotation sizing is now four settings the user sets directly — font
