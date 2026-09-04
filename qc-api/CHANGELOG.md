@@ -1,5 +1,11 @@
 # Changelog — qc-api
 
+## 0.28.1 — 2026-09-04
+
+Version bump only -- nothing in this file changed. The label chip border
+weight fix and the PDF-export/on-screen consistency fixes are entirely
+front-end; see the root CHANGELOG.md.
+
 ## 0.28.0 — 2026-09-03
 
 Version bump only -- nothing in this file changed. The annotation styling

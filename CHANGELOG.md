@@ -55,6 +55,43 @@ the project-level record.
 
 ## History
 
+### 0.28.1 — 2026-09-04
+
+**Two follow-ups to 0.28.0's styling pass, both found by comparing the same
+real record's rendering across surfaces rather than by inspecting one
+surface alone.**
+
+- **The label chip's border still wasn't the box's own weight, despite
+  0.28.0's fix.** That release brought the box and the chip to the same
+  base border width, but deliberately left the chip's border OUT of the
+  critical 2x weight multiplier, reasoning the chip's new double border
+  already carried that signal on its own — reported back, correctly, from
+  a real screenshot: an SVG stroke renders centred on its own path, so an
+  un-doubled chip border next to a doubled box border were never going to
+  look equal regardless of their base values. The chip border now takes the
+  exact same `width * weight` the box border does, in every case. That
+  reopened the space problem the exemption existed to dodge — a critical
+  chip's border is now visibly thicker, and a second border plus a real gap
+  no longer fit inside the old chip height — so `LABEL_HEIGHT_RATIO` grew
+  (1.9 → 2.6, and extracted into one shared constant, previously three
+  separately-hardcoded copies) rather than shrinking the border back down.
+- **The exported PDF and the on-screen drawing looked "very different" side
+  by side**, per a direct comparison against a real record. Three separate,
+  structural mismatches, not just differently-tuned numbers:
+  - The label chip's fill was flat, near-opaque white in the PDF, versus a
+    subtle tint of the PMP's own colour on screen — a genuinely different
+    look, not a sizing difference. The PDF now uses the same colour tint.
+  - The leader arrowhead was two thin open strokes meeting at a point in
+    the PDF (a hollow chevron), versus a solid filled triangle on screen —
+    so the PDF's arrowhead could never read as "solid" no matter how large
+    it was drawn. Now drawn as a real filled triangle.
+  - A critical PMP's `✳` suffix, visible on both on-screen surfaces, has
+    never been drawn in the PDF export at all — it was silently using the
+    bare reference. Now included, with one necessary difference: the PDF's
+    font is WinAnsi-encoded and has no `✳` glyph (drawing it would throw
+    and abort the export), so the PDF uses a plain `*` instead — same
+    purpose, unavoidably different character.
+
 ### 0.28.0 — 2026-09-03
 
 **Styling consistency pass on PMP annotations, plus a new double border for
