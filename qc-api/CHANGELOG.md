@@ -1,5 +1,12 @@
 # Changelog — qc-api
 
+## 0.28.0 — 2026-09-03
+
+Version bump only -- nothing in this file changed. The annotation styling
+consistency pass (box corner radius, shared border weight, the critical
+double border, a bigger arrowhead) is entirely front-end; see the root
+CHANGELOG.md.
+
 ## 0.27.3 — 2026-09-03
 
 Version bump only -- nothing in this file changed. The popout

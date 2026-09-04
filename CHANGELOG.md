@@ -55,6 +55,42 @@ the project-level record.
 
 ## History
 
+### 0.28.0 — 2026-09-03
+
+**Styling consistency pass on PMP annotations, plus a new double border for
+critical characteristics.** Four reported issues, all in `leader-geometry.ts`'s
+shared style system and its three consumers (the interactive canvas, the
+printed report, the PDF export):
+
+- **The PMP box's corner radius stretched into an ellipse on a non-square
+  box.** A plain CSS `%` border-radius is relative to the box's own width
+  for the horizontal radius and its own height for the vertical one, so a
+  thin sliver of a box (a hairline slot or edge dimension) got a corner
+  squashed along whichever axis was longer. Replaced with a radius derived
+  from one fixed size independent of the box's own proportions, expressed
+  as two different axis percentages via CSS's slash longhand so the two
+  cancel out the box's own aspect ratio — the same rounding regardless of
+  how stretched the box itself is.
+- **The PMP box's border and the label chip's border were two different
+  weights** (1.5 and 0.4) with no reason for the mismatch. They could not
+  simply both become the box's own 1.5, though: verified on screen, not
+  assumed, a 3-unit border (1.5 at critical weight) on a label chip only
+  ~2.7 units tall consumed the entire chip, rendering as a solid blob with
+  no visible fill. Both now share 0.45 instead — a real, visible change to
+  the box's own border, not just the chip's.
+- **Critical characteristics now draw a double border on the label chip** —
+  a second, inset border, replacing "thicker single line" as the chip's own
+  critical signal (the box itself keeps its existing 2x weight at critical
+  unchanged). Getting the gap right took a second pass: a gap merely equal
+  to the border's own width still rendered as one solid band, since an SVG
+  stroke renders centred on its path; the two only read as separate lines
+  once the gap exceeds the border width, confirmed by measuring the actual
+  rendered geometry rather than trusting the arithmetic alone.
+- **The leader arrowhead was too small as standard** — a chevron barely
+  wider than the line it sat on. Raised on both SVG surfaces (the marker's
+  own size, in multiples of the leader line's stroke width) and in the PDF
+  export (`PDF_BASE_ARROW_SIZE` 2pt → 4pt).
+
 ### 0.27.3 — 2026-09-03
 
 **The popped-out drawing window could show stale annotations after sitting
