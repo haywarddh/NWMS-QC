@@ -55,6 +55,26 @@ the project-level record.
 
 ## History
 
+### 0.29.2 — 2026-09-04
+
+**The exported PDF has never drawn a rounded corner on the box or the
+label chip, on any version -- both were always sharp-cornered regardless
+of the radius setting, since `pdf-lib`'s `drawRectangle` has no
+corner-radius option at all.** Flagged as a known gap a couple of rounds
+back, now confirmed against a real exported PDF and fixed: both are now
+drawn as a proper SVG rounded-rectangle path (four straight edges, four
+quarter-circle arcs) via `drawSvgPath`, the same escape hatch already used
+for the arrowhead. Confirmed `pdf-lib`'s own SVG path parser fully
+implements arc commands, converting to Bezier curves with the same
+approach Inkscape's svgtopdf uses, before relying on it.
+
+Also reduced the radius setting's own top end (30pt → 15pt). A label
+chip's corner naturally clamps to a full stadium/capsule once the radius
+passes half the chip's own height -- correct, expected geometry, not a
+bug, but it meant most of the old range read as "no effect" once past
+that point on a typically-sized chip. The full [0, 15] range now stays
+visually meaningful at the default font size.
+
 ### 0.29.1 — 2026-09-04
 
 **A critical PMP's label chip read visibly heavier than its box and its

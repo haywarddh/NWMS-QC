@@ -1,5 +1,11 @@
 # Changelog — qc-api
 
+## 0.29.2 — 2026-09-04
+
+Version bump only -- nothing in this file changed. Rounded PDF corners
+and the radius range reduction are entirely front-end; see the root
+CHANGELOG.md.
+
 ## 0.29.1 — 2026-09-04
 
 Version bump only -- nothing in this file changed. Dropping the critical
